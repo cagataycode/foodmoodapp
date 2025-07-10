@@ -1,5 +1,6 @@
 {
   "expo": {
+    "scheme": "foodmoodapp",
     "name": "foodmoodapp",
     "slug": "foodmoodapp",
     "version": "1.0.0",
@@ -24,6 +25,20 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router"
+    ],
+    "packagerOpts": {
+      "config": "metro.config.js",
+      "sourceExts": [
+        "js",
+        "jsx",
+        "ts",
+        "tsx",
+        "json",
+        "svg"
+      ]
     }
   }
 }
