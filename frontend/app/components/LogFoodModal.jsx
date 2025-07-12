@@ -293,13 +293,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: "#2c3e50",
   },
-  imageButton: {
-    marginLeft: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    backgroundColor: "#eaf3fa",
-    borderRadius: 8,
-  },
+
   foodImage: {
     width: 100,
     height: 75,
