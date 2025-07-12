@@ -52,9 +52,15 @@ class ApiService {
     }
 
     try {
+      // Create a safe copy of headers for logging (redact sensitive data)
+      const safeHeaders = { ...config.headers };
+      if (safeHeaders.Authorization) {
+        safeHeaders.Authorization = "Bearer [REDACTED]";
+      }
+
       logger.log("📤 Request config:", {
         method: config.method || "GET",
-        headers: config.headers,
+        headers: safeHeaders,
       });
       const response = await fetch(url, config);
       logger.log("📥 Response status:", response.status);
