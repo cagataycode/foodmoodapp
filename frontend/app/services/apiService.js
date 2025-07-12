@@ -2,6 +2,28 @@ import { getApiUrl } from "../config/api";
 
 const API_BASE_URL = getApiUrl();
 
+// Debug configuration - set to false for production
+const DEBUG_MODE = __DEV__;
+
+// Simple logger utility
+const logger = {
+  log: (...args) => {
+    if (DEBUG_MODE) {
+      console.log(...args);
+    }
+  },
+  error: (...args) => {
+    if (DEBUG_MODE) {
+      console.error(...args);
+    }
+  },
+  warn: (...args) => {
+    if (DEBUG_MODE) {
+      console.warn(...args);
+    }
+  },
+};
+
 class ApiService {
   constructor() {
     this.baseURL = API_BASE_URL;
@@ -12,8 +34,8 @@ class ApiService {
     const url = `${this.baseURL}${endpoint}`;
 
     // Debug logging
-    console.log("🌐 Making API request to:", url);
-    console.log("📱 API Base URL:", this.baseURL);
+    logger.log("🌐 Making API request to:", url);
+    logger.log("📱 API Base URL:", this.baseURL);
 
     const config = {
       headers: {
@@ -30,15 +52,15 @@ class ApiService {
     }
 
     try {
-      console.log("📤 Request config:", {
+      logger.log("📤 Request config:", {
         method: config.method || "GET",
         headers: config.headers,
       });
       const response = await fetch(url, config);
-      console.log("📥 Response status:", response.status);
+      logger.log("📥 Response status:", response.status);
 
       const data = await response.json();
-      console.log("📥 Response data:", data);
+      logger.log("📥 Response data:", data);
 
       if (!response.ok) {
         throw new Error(data.error || "Request failed");
@@ -46,8 +68,8 @@ class ApiService {
 
       return data;
     } catch (error) {
-      console.error("❌ API Request Error:", error);
-      console.error("❌ Error details:", {
+      logger.error("❌ API Request Error:", error);
+      logger.error("❌ Error details:", {
         message: error.message,
         url: url,
         baseURL: this.baseURL,
@@ -64,7 +86,7 @@ class ApiService {
       // For development, we'll use a simple in-memory storage
       return global.authToken || null;
     } catch (error) {
-      console.error("Error getting stored token:", error);
+      logger.error("Error getting stored token:", error);
       return null;
     }
   }
@@ -75,7 +97,7 @@ class ApiService {
       // In production, use SecureStore or similar
       global.authToken = token;
     } catch (error) {
-      console.error("Error setting stored token:", error);
+      logger.error("Error setting stored token:", error);
     }
   }
 
@@ -85,7 +107,7 @@ class ApiService {
       // In production, use SecureStore or similar
       global.authToken = null;
     } catch (error) {
-      console.error("Error removing stored token:", error);
+      logger.error("Error removing stored token:", error);
     }
   }
 
@@ -122,7 +144,7 @@ class ApiService {
         method: "POST",
       });
     } catch (error) {
-      console.error("Logout error:", error);
+      logger.error("Logout error:", error);
     } finally {
       await this.removeStoredToken();
     }
@@ -273,16 +295,16 @@ class ApiService {
   // Health check
   async healthCheck() {
     try {
-      console.log("🏥 Testing health check...");
+      logger.log("🏥 Testing health check...");
       const response = await fetch(
         `${this.baseURL.replace("/api", "")}/health`
       );
-      console.log("🏥 Health check response status:", response.status);
+      logger.log("🏥 Health check response status:", response.status);
       const data = await response.json();
-      console.log("🏥 Health check data:", data);
+      logger.log("🏥 Health check data:", data);
       return data;
     } catch (error) {
-      console.error("🏥 Health check failed:", error);
+      logger.error("🏥 Health check failed:", error);
       throw new Error("Backend server is not available");
     }
   }
