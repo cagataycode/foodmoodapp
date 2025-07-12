@@ -92,7 +92,11 @@ const Profile = () => {
   const renderField = (label, key, placeholder, keyboardType = "default") => (
     <ProfileField
       label={label}
-      value={isEditing ? tempProfile[key] : profile[key]}
+      value={
+        isEditing
+          ? tempProfile[key]?.toString() || ""
+          : profile[key]?.toString() || ""
+      }
       isEditing={isEditing}
       onChangeText={(text) => setTempProfile({ ...tempProfile, [key]: text })}
       placeholder={placeholder}
