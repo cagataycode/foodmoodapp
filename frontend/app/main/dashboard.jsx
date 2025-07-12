@@ -92,7 +92,7 @@ const Dashboard = () => {
   }
 
   const grouped = groupLogsByDay(
-    logs.sort((a, b) => new Date(b.date) - new Date(a.date))
+    [...logs].sort((a, b) => new Date(b.date) - new Date(a.date))
   );
   const groupedEntries = Object.entries(grouped);
   const reversedGroupedEntries = groupedEntries.reverse();
