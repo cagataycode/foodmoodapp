@@ -116,6 +116,8 @@ const Settings = () => {
           trackColor={{ false: "#e1e8ed", true: "#3498db" }}
           thumbColor={value ? "#ffffff" : "#f4f3f4"}
         />
+      ) : type === "info" ? (
+        <Text style={styles.infoText}>{description}</Text>
       ) : (
         <TouchableOpacity onPress={onToggle}>
           <Text style={styles.arrow}>→</Text>
@@ -336,6 +338,11 @@ const styles = StyleSheet.create({
   settingDescription: {
     fontSize: 14,
     color: "#7f8c8d",
+  },
+  infoText: {
+    fontSize: 14,
+    color: "#7f8c8d",
+    fontStyle: "italic",
   },
   arrow: {
     fontSize: 18,
