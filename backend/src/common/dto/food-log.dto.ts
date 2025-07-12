@@ -1,7 +1,17 @@
-import { IsString, IsNotEmpty, IsOptional, IsIn, IsISO8601, MaxLength } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsIn,
+  IsISO8601,
+  MaxLength,
+  IsInt,
+  Min,
+  Max,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-export type MoodType = 
+export type MoodType =
   | 'energised'
   | 'sleepy'
   | 'calm'
@@ -34,10 +44,32 @@ export class CreateFoodLogDto {
 
   @ApiProperty({
     description: 'Mood after eating',
-    enum: ['energised', 'sleepy', 'calm', 'focused', 'anxious', 'happy', 'sad', 'irritable', 'satisfied', 'sluggish'],
+    enum: [
+      'energised',
+      'sleepy',
+      'calm',
+      'focused',
+      'anxious',
+      'happy',
+      'sad',
+      'irritable',
+      'satisfied',
+      'sluggish',
+    ],
     example: 'energised',
   })
-  @IsIn(['energised', 'sleepy', 'calm', 'focused', 'anxious', 'happy', 'sad', 'irritable', 'satisfied', 'sluggish'])
+  @IsIn([
+    'energised',
+    'sleepy',
+    'calm',
+    'focused',
+    'anxious',
+    'happy',
+    'sad',
+    'irritable',
+    'satisfied',
+    'sluggish',
+  ])
   mood: MoodType;
 
   @ApiProperty({
@@ -90,11 +122,33 @@ export class UpdateFoodLogDto {
 
   @ApiPropertyOptional({
     description: 'Mood after eating',
-    enum: ['energised', 'sleepy', 'calm', 'focused', 'anxious', 'happy', 'sad', 'irritable', 'satisfied', 'sluggish'],
+    enum: [
+      'energised',
+      'sleepy',
+      'calm',
+      'focused',
+      'anxious',
+      'happy',
+      'sad',
+      'irritable',
+      'satisfied',
+      'sluggish',
+    ],
     example: 'energised',
   })
   @IsOptional()
-  @IsIn(['energised', 'sleepy', 'calm', 'focused', 'anxious', 'happy', 'sad', 'irritable', 'satisfied', 'sluggish'])
+  @IsIn([
+    'energised',
+    'sleepy',
+    'calm',
+    'focused',
+    'anxious',
+    'happy',
+    'sad',
+    'irritable',
+    'satisfied',
+    'sluggish',
+  ])
   mood?: MoodType;
 
   @ApiPropertyOptional({
@@ -145,11 +199,33 @@ export class FoodLogFiltersDto {
 
   @ApiPropertyOptional({
     description: 'Filter by mood type',
-    enum: ['energised', 'sleepy', 'calm', 'focused', 'anxious', 'happy', 'sad', 'irritable', 'satisfied', 'sluggish'],
+    enum: [
+      'energised',
+      'sleepy',
+      'calm',
+      'focused',
+      'anxious',
+      'happy',
+      'sad',
+      'irritable',
+      'satisfied',
+      'sluggish',
+    ],
     example: 'energised',
   })
   @IsOptional()
-  @IsIn(['energised', 'sleepy', 'calm', 'focused', 'anxious', 'happy', 'sad', 'irritable', 'satisfied', 'sluggish'])
+  @IsIn([
+    'energised',
+    'sleepy',
+    'calm',
+    'focused',
+    'anxious',
+    'happy',
+    'sad',
+    'irritable',
+    'satisfied',
+    'sluggish',
+  ])
   mood?: MoodType;
 
   @ApiPropertyOptional({
@@ -167,6 +243,9 @@ export class FoodLogFiltersDto {
     maximum: 100,
   })
   @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(100)
   limit?: number;
 
   @ApiPropertyOptional({
@@ -175,5 +254,7 @@ export class FoodLogFiltersDto {
     minimum: 0,
   })
   @IsOptional()
+  @IsInt()
+  @Min(0)
   offset?: number;
-} 
+}
