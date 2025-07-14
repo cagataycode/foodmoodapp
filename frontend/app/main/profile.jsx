@@ -1,178 +1,68 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  ScrollView,
   SafeAreaView,
-  Alert,
+  ScrollView,
 } from "react-native";
 import { router } from "expo-router";
-import { TopBar, Avatar, ProfileField, LoadingScreen } from "../components";
+import { TopBar, Avatar } from "../components";
 import { useAuth } from "../contexts/AuthContext";
-import apiService from "../services/apiService";
+
+const periodData = [
+  { label: "This Week", days: 7, logs: 21, period: "this-week" },
+  { label: "Last Week", days: 7, logs: 21, period: "last-week" },
+  { label: "3 Weeks Ago", days: 7, logs: 21, period: "3-weeks-ago" },
+  { label: "4 Weeks Ago", days: 7, logs: 21, period: "4-weeks-ago" },
+  { label: "This Month", days: 30, logs: 84, period: "this-month" },
+];
 
 const Profile = () => {
-  const { isAuthenticated, loading, user, updateProfile } = useAuth();
-  const [isEditing, setIsEditing] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [profile, setProfile] = useState({
-    username: user?.username || "",
-    email: user?.email || "",
-    age: user?.age || "",
-    height: user?.height || "",
-    weight: user?.weight || "",
-    goal: user?.goal || "Maintain healthy eating habits",
-  });
+  const { isAuthenticated, loading, user } = useAuth();
 
-  const [tempProfile, setTempProfile] = useState({ ...profile });
-
-  // Update profile when user data changes
-  useEffect(() => {
-    if (user) {
-      const updatedProfile = {
-        username: user.username || "",
-        email: user.email || "",
-        age: user.age || "",
-        height: user.height || "",
-        weight: user.weight || "",
-        goal: user.goal || "Maintain healthy eating habits",
-      };
-      setProfile(updatedProfile);
-      setTempProfile(updatedProfile);
-    }
-  }, [user]);
-
-  // Redirect to home if not authenticated
-  useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      router.replace("/");
-    }
-  }, [isAuthenticated, loading]);
-
-  // Show loading while checking auth
   if (loading) {
-    return <LoadingScreen message="Loading profile..." />;
+    return <Text>Loading...</Text>;
   }
-
-  // Don't render if not authenticated
   if (!isAuthenticated) {
+    router.replace("/auth/signin");
     return null;
   }
-
-  const handleSave = async () => {
-    setIsLoading(true);
-
-    try {
-      const result = await updateProfile(tempProfile);
-
-      if (result.success) {
-        setProfile({ ...tempProfile });
-        setIsEditing(false);
-        Alert.alert("Success", "Profile updated successfully!");
-      } else {
-        Alert.alert(
-          "Error",
-          result.error || "Failed to update profile. Please try again."
-        );
-      }
-    } catch (error) {
-      Alert.alert("Error", "Failed to update profile. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleCancel = () => {
-    setTempProfile({ ...profile });
-    setIsEditing(false);
-  };
-
-  const renderField = (label, key, placeholder, keyboardType = "default") => (
-    <ProfileField
-      label={label}
-      value={
-        isEditing
-          ? tempProfile[key]?.toString() || ""
-          : profile[key]?.toString() || ""
-      }
-      isEditing={isEditing}
-      onChangeText={(text) => setTempProfile({ ...tempProfile, [key]: text })}
-      placeholder={placeholder}
-      keyboardType={keyboardType}
-    />
-  );
 
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <TopBar showLogo={true} showSettings={true} />
-
         <ScrollView style={styles.content}>
           <View style={styles.profileHeader}>
-            <Avatar name={profile.username} />
-            <Text style={styles.profileName}>{profile.username}</Text>
-            {!isEditing && (
-              <TouchableOpacity
-                style={styles.editButton}
-                onPress={() => setIsEditing(true)}
-              >
-                <Text style={styles.editButtonText}>Edit Profile</Text>
-              </TouchableOpacity>
-            )}
+            <Avatar name={user?.username} />
+            <Text style={styles.profileName}>{user?.username}</Text>
+            <TouchableOpacity
+              style={styles.editButton}
+              onPress={() => router.push("/main/edit-profile")}
+            >
+              <Text style={styles.editButtonText}>Edit Profile</Text>
+            </TouchableOpacity>
           </View>
-
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Personal Information</Text>
-            {renderField("Username", "username", "Enter your username")}
-            {renderField("Email", "email", "Enter your email", "email-address")}
-            {renderField("Age", "age", "Enter your age", "numeric")}
+          <View style={styles.periodsSection}>
+            {periodData.map((period) => (
+              <View key={period.period} style={styles.periodGroup}>
+                <Text style={styles.periodLabel}>{period.label}</Text>
+                <TouchableOpacity
+                  style={styles.periodCard}
+                  onPress={() =>
+                    router.push(`/main/insights?period=${period.period}`)
+                  }
+                >
+                  <Text style={styles.periodCardText}>
+                    {period.days} days - {period.logs} logs
+                  </Text>
+                  <Text style={styles.periodCardArrow}>›</Text>
+                </TouchableOpacity>
+              </View>
+            ))}
           </View>
-
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Physical Information</Text>
-            {renderField(
-              "Height (cm)",
-              "height",
-              "Enter your height",
-              "numeric"
-            )}
-            {renderField(
-              "Weight (kg)",
-              "weight",
-              "Enter your weight",
-              "numeric"
-            )}
-          </View>
-
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Goals</Text>
-            {renderField("Goal", "goal", "Enter your health goal")}
-          </View>
-
-          {isEditing && (
-            <View style={styles.buttonContainer}>
-              <TouchableOpacity
-                style={[styles.button, styles.saveButton]}
-                onPress={handleSave}
-                disabled={isLoading}
-              >
-                <Text style={styles.buttonText}>
-                  {isLoading ? "Saving..." : "Save Changes"}
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.button, styles.cancelButton]}
-                onPress={handleCancel}
-                disabled={isLoading}
-              >
-                <Text style={[styles.buttonText, styles.cancelButtonText]}>
-                  Cancel
-                </Text>
-              </TouchableOpacity>
-            </View>
-          )}
         </ScrollView>
       </SafeAreaView>
     </View>
@@ -199,63 +89,55 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "bold",
     color: "#2c3e50",
+    marginTop: 8,
+    marginBottom: 8,
   },
   editButton: {
-    marginTop: 16,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    backgroundColor: "#3498db",
+    backgroundColor: "#e67e22",
     borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 24,
+    marginBottom: 16,
   },
   editButtonText: {
-    color: "#ffffff",
+    color: "#fff",
     fontSize: 16,
     fontWeight: "600",
   },
-  section: {
-    backgroundColor: "#ffffff",
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 20,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
+  periodsSection: {
+    marginTop: 8,
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#2c3e50",
-    marginBottom: 16,
-  },
-  buttonContainer: {
-    marginTop: 20,
-  },
-  button: {
-    borderRadius: 12,
-    padding: 16,
-    alignItems: "center",
+  periodGroup: {
     marginBottom: 12,
   },
-  saveButton: {
-    backgroundColor: "#3498db",
-  },
-  cancelButton: {
-    backgroundColor: "transparent",
-    borderWidth: 2,
-    borderColor: "#e74c3c",
-  },
-  buttonText: {
-    fontSize: 18,
+  periodLabel: {
+    fontSize: 15,
+    color: "#7f8c8d",
     fontWeight: "600",
-    color: "#ffffff",
+    marginBottom: 4,
+    marginLeft: 2,
   },
-  cancelButtonText: {
-    color: "#e74c3c",
+  periodCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#dbe4ee",
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    justifyContent: "space-between",
+  },
+  periodCardText: {
+    fontSize: 16,
+    color: "#2c3e50",
+    fontWeight: "500",
+  },
+  periodCardArrow: {
+    fontSize: 22,
+    color: "#7f8c8d",
+    fontWeight: "bold",
+    marginLeft: 8,
   },
 });
 
