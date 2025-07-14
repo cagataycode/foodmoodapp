@@ -13,7 +13,6 @@ import * as d3Shape from "d3-shape";
 import { router } from "expo-router";
 import { TopBar } from "../components";
 
-const periodTitle = "This Month";
 const insights = [
   {
     type: "surprise",
