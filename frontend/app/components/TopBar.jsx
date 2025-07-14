@@ -63,7 +63,12 @@ const TopBar = ({
   return (
     <View style={styles.header}>
       {showBack ? (
-        <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
+        <TouchableOpacity 
+          onPress={handleBackPress} 
+          style={styles.backButton} 
+          accessible={true} 
+          accessibilityLabel="Go back"
+        >
           <View style={styles.backArrowBox}>
             <Text style={styles.backArrow}>←</Text>
           </View>
