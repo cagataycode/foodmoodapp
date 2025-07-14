@@ -226,16 +226,18 @@ export class FoodLogsService {
     if (logs.length === 0) return 0;
 
     const moodScores = {
-      energised: 9,
-      happy: 8,
-      satisfied: 7,
-      focused: 6,
-      calm: 5,
-      sluggish: 4,
-      sleepy: 3,
-      anxious: 2,
+      energised: 1,
+      happy: 1,
+      satisfied: 1,
+      focused: 1,
+      calm: 1,
+      sluggish: 1,
+      sleepy: 1,
+      anxious: 1,
       sad: 1,
       irritable: 1,
+      guilty: 1,
+      craving_more: 1,
     };
 
     const totalScore = logs.reduce((sum, log) => {
