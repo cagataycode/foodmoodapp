@@ -469,11 +469,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  moodBarBarCol: {
-    flex: 1,
-    justifyContent: "center",
-    position: "relative",
-  },
   moodBar: {
     height: 20,
     borderRadius: 10,
