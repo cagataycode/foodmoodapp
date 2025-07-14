@@ -182,8 +182,8 @@ const Insights = () => {
         {Object.entries(grouped).map(([type, items]) => (
           <View key={type} style={styles.insightsSection}>
             <Text style={styles.groupLabel}>{groupLabels[type]}</Text>
-            {items.map((insight, idx) => (
-              <View key={idx} style={styles.bulletRow}>
+            {items.map((insight) => (
+              <View key={insight.id} style={styles.bulletRow}>
                 <Text style={styles.bulletPoint}>•</Text>
                 <Text style={styles.insightText}>{insight.text}</Text>
               </View>
