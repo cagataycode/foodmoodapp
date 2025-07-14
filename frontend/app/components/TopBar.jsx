@@ -1,5 +1,5 @@
 import React from "react";
-import { View, TouchableOpacity, StyleSheet } from "react-native";
+import { View, TouchableOpacity, StyleSheet, Text } from "react-native";
 import { router, usePathname } from "expo-router";
 import AppLogo from "../../assets/icons/app-logo.svg";
 import UserIcon from "../../assets/icons/user-icon.svg";
@@ -14,6 +14,8 @@ const TopBar = ({
   onSettingsPress,
   customLeftIcon,
   customRightIcon,
+  showBack = false,
+  onBackPress,
 }) => {
   const pathname = usePathname();
 
@@ -21,15 +23,11 @@ const TopBar = ({
     if (onLogoPress) {
       onLogoPress();
     } else {
-      // Only navigate if we're not already on the dashboard
-      if (pathname !== "/main/dashboard") {
-        // If we're on profile or settings, go back to dashboard
-        // If we're on any other page, replace to dashboard
-        if (pathname === "/main/profile" || pathname === "/main/settings") {
-          router.back();
-        } else {
-          router.replace("/main/dashboard");
-        }
+      // If on profile page, go back
+      if (pathname === "/main/profile") {
+        router.back();
+      } else if (pathname !== "/main/dashboard") {
+        router.replace("/main/dashboard");
       }
     }
   };
@@ -38,7 +36,6 @@ const TopBar = ({
     if (onProfilePress) {
       onProfilePress();
     } else {
-      // Only navigate if we're not already on the profile page
       if (pathname !== "/main/profile") {
         router.push("/main/profile");
       }
@@ -49,16 +46,29 @@ const TopBar = ({
     if (onSettingsPress) {
       onSettingsPress();
     } else {
-      // Only navigate if we're not already on the settings page
       if (pathname !== "/main/settings") {
         router.push("/main/settings");
       }
     }
   };
 
+  const handleBackPress = () => {
+    if (onBackPress) {
+      onBackPress();
+    } else {
+      router.back();
+    }
+  };
+
   return (
     <View style={styles.header}>
-      {customLeftIcon ? (
+      {showBack ? (
+        <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
+          <View style={styles.backArrowBox}>
+            <Text style={styles.backArrow}>←</Text>
+          </View>
+        </TouchableOpacity>
+      ) : customLeftIcon ? (
         customLeftIcon
       ) : showLogo ? (
         <TouchableOpacity onPress={handleLogoPress}>
@@ -67,22 +77,20 @@ const TopBar = ({
       ) : (
         <View />
       )}
-
       <View style={{ flex: 1 }} />
-
       {customRightIcon ? (
         customRightIcon
       ) : showProfile ? (
         <TouchableOpacity onPress={handleProfilePress}>
           <UserIcon width={36} height={36} />
         </TouchableOpacity>
-      ) : showSettings ? (
+      ) : null}
+      {showSettings ? (
         <TouchableOpacity onPress={handleSettingsPress}>
           <SettingsLogo width={36} height={36} />
         </TouchableOpacity>
-      ) : (
-        <View />
-      )}
+      ) : null}
+      {!showProfile && !showSettings && !customRightIcon ? <View /> : null}
     </View>
   );
 };
@@ -96,6 +104,22 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderBottomWidth: 1,
     borderBottomColor: "#e1e8ed",
+  },
+  backButton: {
+    padding: 8,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  backArrowBox: {
+    width: 32,
+    height: 32,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  backArrow: {
+    fontSize: 24,
+    color: "#3498db",
+    fontWeight: "bold",
   },
 });
 

@@ -30,6 +30,13 @@ export default function MainLayout() {
           gestureEnabled: true,
         }}
       />
+      <Stack.Screen
+        name="edit-profile"
+        options={{
+          // Prevent going back to login from edit-profile
+          gestureEnabled: false,
+        }}
+      />
     </Stack>
   );
 }
