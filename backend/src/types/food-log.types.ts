@@ -10,7 +10,9 @@ export type MoodType =
   | 'sad'
   | 'irritable'
   | 'satisfied'
-  | 'sluggish';
+  | 'sluggish'
+  | 'guilty'
+  | 'craving_more';
 
 export interface FoodLog {
   id: string;

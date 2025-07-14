@@ -11,17 +11,22 @@ import {
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-export type MoodType =
-  | 'energised'
-  | 'sleepy'
-  | 'calm'
-  | 'focused'
-  | 'anxious'
-  | 'happy'
-  | 'sad'
-  | 'irritable'
-  | 'satisfied'
-  | 'sluggish';
+export const MOOD_LIST = [
+  'energised',
+  'sleepy',
+  'calm',
+  'focused',
+  'anxious',
+  'happy',
+  'sad',
+  'irritable',
+  'satisfied',
+  'sluggish',
+  'guilty',
+  'craving_more',
+] as const;
+
+export type MoodType = (typeof MOOD_LIST)[number];
 
 export class CreateFoodLogDto {
   @ApiProperty({
@@ -44,32 +49,10 @@ export class CreateFoodLogDto {
 
   @ApiProperty({
     description: 'Mood after eating',
-    enum: [
-      'energised',
-      'sleepy',
-      'calm',
-      'focused',
-      'anxious',
-      'happy',
-      'sad',
-      'irritable',
-      'satisfied',
-      'sluggish',
-    ],
+    enum: MOOD_LIST,
     example: 'energised',
   })
-  @IsIn([
-    'energised',
-    'sleepy',
-    'calm',
-    'focused',
-    'anxious',
-    'happy',
-    'sad',
-    'irritable',
-    'satisfied',
-    'sluggish',
-  ])
+  @IsIn(MOOD_LIST)
   mood: MoodType;
 
   @ApiProperty({
@@ -122,33 +105,11 @@ export class UpdateFoodLogDto {
 
   @ApiPropertyOptional({
     description: 'Mood after eating',
-    enum: [
-      'energised',
-      'sleepy',
-      'calm',
-      'focused',
-      'anxious',
-      'happy',
-      'sad',
-      'irritable',
-      'satisfied',
-      'sluggish',
-    ],
+    enum: MOOD_LIST,
     example: 'energised',
   })
   @IsOptional()
-  @IsIn([
-    'energised',
-    'sleepy',
-    'calm',
-    'focused',
-    'anxious',
-    'happy',
-    'sad',
-    'irritable',
-    'satisfied',
-    'sluggish',
-  ])
+  @IsIn(MOOD_LIST)
   mood?: MoodType;
 
   @ApiPropertyOptional({
@@ -199,33 +160,11 @@ export class FoodLogFiltersDto {
 
   @ApiPropertyOptional({
     description: 'Filter by mood type',
-    enum: [
-      'energised',
-      'sleepy',
-      'calm',
-      'focused',
-      'anxious',
-      'happy',
-      'sad',
-      'irritable',
-      'satisfied',
-      'sluggish',
-    ],
+    enum: MOOD_LIST,
     example: 'energised',
   })
   @IsOptional()
-  @IsIn([
-    'energised',
-    'sleepy',
-    'calm',
-    'focused',
-    'anxious',
-    'happy',
-    'sad',
-    'irritable',
-    'satisfied',
-    'sluggish',
-  ])
+  @IsIn(MOOD_LIST)
   mood?: MoodType;
 
   @ApiPropertyOptional({

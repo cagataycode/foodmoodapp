@@ -10,6 +10,8 @@ export const MOOD_COLORS = {
   irritable: "#F9E7D6",
   satisfied: "#E6F4E6",
   sluggish: "#F4F1E6",
+  guilty: "#E6D3E6",
+  craving_more: "#E2DDE6",
 };
 
 // Helper to get mood colors for an array of moods

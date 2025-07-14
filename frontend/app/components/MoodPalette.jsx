@@ -12,6 +12,8 @@ const MOODS = [
   { key: "irritable", label: "Irritable", color: "#F9E7D6", emoji: "😠" },
   { key: "satisfied", label: "Satisfied", color: "#E6F4E6", emoji: "😌" },
   { key: "sluggish", label: "Sluggish", color: "#F4F1E6", emoji: "🐌" },
+  { key: "guilty", label: "Guilty", color: "#E6D3E6", emoji: "😳" },
+  { key: "craving_more", label: "Craving More", color: "#E2DDE6", emoji: "🍟" },
 ];
 
 const MoodPalette = ({ selectedMoods = [], onSelect }) => {
