@@ -52,7 +52,7 @@ export class FoodLogsController {
             id: { type: 'string' },
             user_id: { type: 'string' },
             food_name: { type: 'string' },
-            mood: { type: 'string' },
+            moods: { type: 'array', items: { type: 'string' } },
             meal_time: { type: 'string' },
             portion_size: { type: 'string' },
             notes: { type: 'string' },
@@ -94,9 +94,9 @@ export class FoodLogsController {
     description: 'Filter until date (ISO 8601)',
   })
   @ApiQuery({
-    name: 'mood',
+    name: 'moods',
     required: false,
-    description: 'Filter by mood type',
+    description: 'Filter by mood type (array of strings)',
   })
   @ApiQuery({
     name: 'food_name',
@@ -128,7 +128,7 @@ export class FoodLogsController {
               id: { type: 'string' },
               user_id: { type: 'string' },
               food_name: { type: 'string' },
-              mood: { type: 'string' },
+              moods: { type: 'array', items: { type: 'string' } },
               meal_time: { type: 'string' },
               portion_size: { type: 'string' },
               notes: { type: 'string' },
@@ -223,7 +223,7 @@ export class FoodLogsController {
             id: { type: 'string' },
             user_id: { type: 'string' },
             food_name: { type: 'string' },
-            mood: { type: 'string' },
+            moods: { type: 'array', items: { type: 'string' } },
             meal_time: { type: 'string' },
             portion_size: { type: 'string' },
             notes: { type: 'string' },
@@ -261,7 +261,7 @@ export class FoodLogsController {
             id: { type: 'string' },
             user_id: { type: 'string' },
             food_name: { type: 'string' },
-            mood: { type: 'string' },
+            moods: { type: 'array', items: { type: 'string' } },
             meal_time: { type: 'string' },
             portion_size: { type: 'string' },
             notes: { type: 'string' },

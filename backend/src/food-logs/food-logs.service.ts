@@ -75,8 +75,8 @@ export class FoodLogsService {
       query = query.lte('meal_time', filters.end_date);
     }
 
-    if (filters.mood) {
-      query = query.eq('mood', filters.mood);
+    if (filters.moods && filters.moods.length > 0) {
+      query = query.in('mood', filters.moods);
     }
 
     if (filters.food_name) {
@@ -195,7 +195,9 @@ export class FoodLogsService {
     const totalLogs = logs.length;
     const moodCounts = logs.reduce(
       (acc, log) => {
-        acc[log.mood] = (acc[log.mood] || 0) + 1;
+        log.moods.forEach(mood => {
+          acc[mood] = (acc[mood] || 0) + 1;
+        });
         return acc;
       },
       {} as Record<string, number>,
@@ -241,7 +243,7 @@ export class FoodLogsService {
     };
 
     const totalScore = logs.reduce((sum, log) => {
-      return sum + (moodScores[log.mood] || 5);
+      return sum + (moodScores[log.moods[0]] || 5); // Assuming mood is an array and we take the first one for simplicity
     }, 0);
 
     return Math.round((totalScore / logs.length) * 10) / 10;
