@@ -243,9 +243,14 @@ export class FoodLogsService {
     };
 
     const totalScore = logs.reduce((sum, log) => {
-      return sum + (moodScores[log.moods[0]] || 5); // Assuming mood is an array and we take the first one for simplicity
+      const moodScoreSum = log.moods.reduce((moodSum, mood) => {
+        return moodSum + (moodScores[mood] || 5);
+      }, 0);
+      return sum + moodScoreSum;
     }, 0);
 
-    return Math.round((totalScore / logs.length) * 10) / 10;
+    const totalMoods = logs.reduce((count, log) => count + log.moods.length, 0);
+
+    return totalMoods > 0 ? Math.round((totalScore / totalMoods) * 10) / 10 : 0;
   }
 }
