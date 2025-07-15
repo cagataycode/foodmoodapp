@@ -27,6 +27,7 @@ import {
   CreateFoodLogDto,
   UpdateFoodLogDto,
   FoodLogFiltersDto,
+  FoodLogResponseDto,
 } from '../common/dto/food-log.dto';
 
 @ApiTags('Food Logs')
@@ -42,27 +43,7 @@ export class FoodLogsController {
   @ApiResponse({
     status: 201,
     description: 'Food log created successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        success: { type: 'boolean', example: true },
-        data: {
-          type: 'object',
-          properties: {
-            id: { type: 'string' },
-            user_id: { type: 'string' },
-            food_name: { type: 'string' },
-            moods: { type: 'array', items: { type: 'string' } },
-            meal_time: { type: 'string' },
-            portion_size: { type: 'string' },
-            notes: { type: 'string' },
-            created_at: { type: 'string' },
-            updated_at: { type: 'string' },
-          },
-        },
-        message: { type: 'string', example: 'Food log created successfully' },
-      },
-    },
+    type: FoodLogResponseDto,
   })
   @ApiResponse({ status: 400, description: 'Validation failed' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -116,29 +97,7 @@ export class FoodLogsController {
   @ApiResponse({
     status: 200,
     description: 'Food logs retrieved successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        success: { type: 'boolean', example: true },
-        data: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              id: { type: 'string' },
-              user_id: { type: 'string' },
-              food_name: { type: 'string' },
-              moods: { type: 'array', items: { type: 'string' } },
-              meal_time: { type: 'string' },
-              portion_size: { type: 'string' },
-              notes: { type: 'string' },
-              created_at: { type: 'string' },
-              updated_at: { type: 'string' },
-            },
-          },
-        },
-      },
-    },
+    type: [FoodLogResponseDto],
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getFoodLogs(@Request() req, @Query() filters: FoodLogFiltersDto) {
@@ -213,26 +172,7 @@ export class FoodLogsController {
   @ApiResponse({
     status: 200,
     description: 'Food log retrieved successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        success: { type: 'boolean', example: true },
-        data: {
-          type: 'object',
-          properties: {
-            id: { type: 'string' },
-            user_id: { type: 'string' },
-            food_name: { type: 'string' },
-            moods: { type: 'array', items: { type: 'string' } },
-            meal_time: { type: 'string' },
-            portion_size: { type: 'string' },
-            notes: { type: 'string' },
-            created_at: { type: 'string' },
-            updated_at: { type: 'string' },
-          },
-        },
-      },
-    },
+    type: FoodLogResponseDto,
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Food log not found' })
@@ -251,27 +191,7 @@ export class FoodLogsController {
   @ApiResponse({
     status: 200,
     description: 'Food log updated successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        success: { type: 'boolean', example: true },
-        data: {
-          type: 'object',
-          properties: {
-            id: { type: 'string' },
-            user_id: { type: 'string' },
-            food_name: { type: 'string' },
-            moods: { type: 'array', items: { type: 'string' } },
-            meal_time: { type: 'string' },
-            portion_size: { type: 'string' },
-            notes: { type: 'string' },
-            created_at: { type: 'string' },
-            updated_at: { type: 'string' },
-          },
-        },
-        message: { type: 'string', example: 'Food log updated successfully' },
-      },
-    },
+    type: FoodLogResponseDto,
   })
   @ApiResponse({ status: 400, description: 'Validation failed' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })

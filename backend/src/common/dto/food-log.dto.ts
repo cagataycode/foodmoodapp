@@ -232,3 +232,16 @@ export class FoodLogFiltersDto {
   @Min(0)
   offset?: number;
 }
+
+export class FoodLogResponseDto {
+  @ApiProperty() id: string;
+  @ApiProperty() user_id: string;
+  @ApiProperty() food_name: string;
+  @ApiProperty({ isArray: true }) moods: MoodType[];
+  @ApiProperty() meal_time: string;
+  @ApiProperty({ required: false }) portion_size?: string;
+  @ApiProperty({ required: false }) notes?: string;
+  @ApiProperty() created_at: string;
+  @ApiProperty() updated_at: string;
+  @ApiProperty({ required: false }) image_base64?: string;
+}
