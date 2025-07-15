@@ -19,7 +19,7 @@ export interface FoodLog {
   user_id: string;
   food_name: string;
   food_id?: string; // Open Food Facts ID for future integration
-  mood: MoodType;
+  moods: MoodType[];
   meal_time: string;
   portion_size?: string;
   notes?: string;
@@ -30,7 +30,7 @@ export interface FoodLog {
 export interface CreateFoodLogRequest {
   food_name: string;
   food_id?: string;
-  mood: MoodType;
+  moods: MoodType[];
   meal_time: string;
   portion_size?: string;
   notes?: string;
@@ -39,7 +39,7 @@ export interface CreateFoodLogRequest {
 export interface UpdateFoodLogRequest {
   food_name?: string;
   food_id?: string;
-  mood?: MoodType;
+  moods?: MoodType[];
   meal_time?: string;
   portion_size?: string;
   notes?: string;
@@ -51,6 +51,6 @@ export interface FoodLogFilters {
   offset?: number;
   start_date?: string;
   end_date?: string;
-  mood?: MoodType;
+  moods?: MoodType[];
   food_name?: string;
 }

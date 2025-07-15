@@ -8,6 +8,8 @@ import {
   IsInt,
   Min,
   Max,
+  IsArray,
+  ArrayNotEmpty,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -26,7 +28,15 @@ export const MOOD_LIST = [
   'craving_more',
 ] as const;
 
+export const MEAL_TYPE_LIST = [
+  'breakfast',
+  'lunch',
+  'dinner',
+  'snack',
+] as const;
+
 export type MoodType = (typeof MOOD_LIST)[number];
+export type MealType = (typeof MEAL_TYPE_LIST)[number];
 
 export class CreateFoodLogDto {
   @ApiProperty({
@@ -39,21 +49,32 @@ export class CreateFoodLogDto {
   @MaxLength(100)
   food_name: string;
 
+  @ApiProperty({
+    description: 'Meal type (breakfast, lunch, dinner, snack)',
+    enum: MEAL_TYPE_LIST,
+    example: 'breakfast',
+  })
+  @IsString()
+  @IsIn(MEAL_TYPE_LIST)
+  meal_type: MealType;
+
   @ApiPropertyOptional({
-    description: 'Open Food Facts ID for future integration',
-    example: '123456789',
+    description: 'Base64-encoded image of the meal',
+    example: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...',
   })
   @IsOptional()
   @IsString()
-  food_id?: string;
+  image_base64?: string;
 
   @ApiProperty({
     description: 'Mood after eating',
     enum: MOOD_LIST,
     example: 'energised',
   })
-  @IsIn(MOOD_LIST)
-  mood: MoodType;
+  @IsArray()
+  @ArrayNotEmpty()
+  @IsIn(MOOD_LIST, { each: true })
+  moods: MoodType[];
 
   @ApiProperty({
     description: 'When the meal was eaten (ISO 8601 format)',
@@ -96,12 +117,22 @@ export class UpdateFoodLogDto {
   food_name?: string;
 
   @ApiPropertyOptional({
-    description: 'Open Food Facts ID for future integration',
-    example: '123456789',
+    description: 'Meal type (breakfast, lunch, dinner, snack)',
+    enum: MEAL_TYPE_LIST,
+    example: 'breakfast',
   })
   @IsOptional()
   @IsString()
-  food_id?: string;
+  @IsIn(MEAL_TYPE_LIST)
+  meal_type?: MealType;
+
+  @ApiPropertyOptional({
+    description: 'Base64-encoded image of the meal',
+    example: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...',
+  })
+  @IsOptional()
+  @IsString()
+  image_base64?: string;
 
   @ApiPropertyOptional({
     description: 'Mood after eating',
@@ -109,8 +140,10 @@ export class UpdateFoodLogDto {
     example: 'energised',
   })
   @IsOptional()
-  @IsIn(MOOD_LIST)
-  mood?: MoodType;
+  @IsArray()
+  @ArrayNotEmpty()
+  @IsIn(MOOD_LIST, { each: true })
+  moods?: MoodType[];
 
   @ApiPropertyOptional({
     description: 'When the meal was eaten (ISO 8601 format)',
@@ -164,8 +197,10 @@ export class FoodLogFiltersDto {
     example: 'energised',
   })
   @IsOptional()
-  @IsIn(MOOD_LIST)
-  mood?: MoodType;
+  @IsArray()
+  @ArrayNotEmpty()
+  @IsIn(MOOD_LIST, { each: true })
+  moods?: MoodType[];
 
   @ApiPropertyOptional({
     description: 'Search by food name',
@@ -196,4 +231,17 @@ export class FoodLogFiltersDto {
   @IsInt()
   @Min(0)
   offset?: number;
+}
+
+export class FoodLogResponseDto {
+  @ApiProperty() id: string;
+  @ApiProperty() user_id: string;
+  @ApiProperty() food_name: string;
+  @ApiProperty({ isArray: true }) moods: MoodType[];
+  @ApiProperty() meal_time: string;
+  @ApiProperty({ required: false }) portion_size?: string;
+  @ApiProperty({ required: false }) notes?: string;
+  @ApiProperty() created_at: string;
+  @ApiProperty() updated_at: string;
+  @ApiProperty({ required: false }) image_base64?: string;
 }
