@@ -16,6 +16,8 @@ import {
 import * as ImagePicker from "expo-image-picker";
 import MoodPalette from "./MoodPalette";
 import GalleryIcon from "../../assets/icons/gallery-icon.svg";
+import apiService from "../services/apiService";
+import * as FileSystem from "expo-file-system";
 
 const TIME_OPTIONS = ["Breakfast", "Lunch", "Dinner", "Snack", "Other"];
 
@@ -93,7 +95,23 @@ const LogFoodModal = ({ visible, onClose, onSave, initialLog }) => {
     }
   };
 
-  const handleSave = () => {
+  // Helper to convert image URI to base64
+  const getBase64Image = async (uri) => {
+    if (!uri) return null;
+    try {
+      const base64 = await FileSystem.readAsStringAsync(uri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+      // Guess mime type from extension (simple)
+      const ext = uri.split(".").pop();
+      const mime = ext === "jpg" || ext === "jpeg" ? "image/jpeg" : "image/png";
+      return `data:${mime};base64,${base64}`;
+    } catch (e) {
+      return null;
+    }
+  };
+
+  const handleSave = async () => {
     if (!food.trim() && !image) {
       Alert.alert("Please enter a food name or add a photo.");
       return;
@@ -103,21 +121,44 @@ const LogFoodModal = ({ visible, onClose, onSave, initialLog }) => {
       return;
     }
     setIsLoading(true);
-    setTimeout(() => {
-      onSave({
-        food,
+    try {
+      let image_base64 = null;
+      if (image && !image.startsWith("data:")) {
+        image_base64 = await getBase64Image(image);
+      } else if (image) {
+        image_base64 = image;
+      }
+      // Map time to meal_type (normalize)
+      let meal_type = time.toLowerCase();
+      if (!["breakfast", "lunch", "dinner", "snack"].includes(meal_type)) {
+        meal_type = "snack";
+      }
+      const foodLogData = {
+        food_name: food,
+        meal_type,
+        image_base64,
         moods: selectedMoods,
-        time,
-        portion,
+        meal_time: initialLog?.meal_time || new Date().toISOString(),
+        portion_size: portion,
         notes,
-        image,
-        date: initialLog?.date || new Date().toISOString(),
-        id: initialLog?.id || Date.now().toString(),
-        loggedAt: initialLog?.loggedAt || new Date().toISOString(),
-      });
+      };
+      let response;
+      if (initialLog && initialLog.id) {
+        response = await apiService.updateFoodLog(initialLog.id, foodLogData);
+      } else {
+        response = await apiService.createFoodLog(foodLogData);
+      }
+      if (response && response.success) {
+        onSave(response.data);
+        onClose();
+      } else {
+        Alert.alert("Error", response?.error || "Failed to save log.");
+      }
+    } catch (e) {
+      Alert.alert("Error", e.message || "Failed to save log.");
+    } finally {
       setIsLoading(false);
-      onClose();
-    }, 500);
+    }
   };
 
   return (

@@ -7,7 +7,10 @@ export function getDayLabel(dateString) {
 
   if (date.toDateString() === today.toDateString()) return "Today";
   if (date.toDateString() === yesterday.toDateString()) return "Yesterday";
-  return date.toLocaleDateString("en-US", { weekday: "long" });
+  // Format as DD.MM
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  return `${day}.${month}`;
 }
 
 // Helper to group logs by day
