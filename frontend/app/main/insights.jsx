@@ -1,16 +1,7 @@
 import React, { useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  Dimensions,
-  SafeAreaView,
-} from "react-native";
-import Svg, { G, Path, Circle } from "react-native-svg";
+import { View, Text, StyleSheet, ScrollView, SafeAreaView } from "react-native";
+import Svg, { G, Path } from "react-native-svg";
 import * as d3Shape from "d3-shape";
-import { router } from "expo-router";
 import { TopBar } from "../components";
 
 const insights = [
@@ -182,8 +173,8 @@ const Insights = () => {
         {Object.entries(grouped).map(([type, items]) => (
           <View key={type} style={styles.insightsSection}>
             <Text style={styles.groupLabel}>{groupLabels[type]}</Text>
-            {items.map((insight) => (
-              <View key={insight.id} style={styles.bulletRow}>
+            {items.map((insight, idx) => (
+              <View key={insight.text + idx} style={styles.bulletRow}>
                 <Text style={styles.bulletPoint}>•</Text>
                 <Text style={styles.insightText}>{insight.text}</Text>
               </View>
@@ -261,7 +252,7 @@ const Insights = () => {
             <Text style={styles.expandedSubhead}>Common foods:</Text>
             <View style={styles.expandedListRow}>
               {moodDetails[expandedMood].foods.map((food, idx) => (
-                <Text key={food} style={styles.expandedListItem}>
+                <Text key={food + idx} style={styles.expandedListItem}>
                   {food}
                   {idx < moodDetails[expandedMood].foods.length - 1 ? ", " : ""}
                 </Text>
@@ -270,7 +261,7 @@ const Insights = () => {
             <Text style={styles.expandedSubhead}>Days:</Text>
             <View style={styles.expandedListRow}>
               {moodDetails[expandedMood].days.map((day, idx) => (
-                <Text key={day} style={styles.expandedListItem}>
+                <Text key={day + idx} style={styles.expandedListItem}>
                   {day}
                   {idx < moodDetails[expandedMood].days.length - 1 ? ", " : ""}
                 </Text>

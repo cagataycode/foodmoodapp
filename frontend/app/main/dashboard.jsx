@@ -11,68 +11,47 @@ import {
 } from "../components";
 import { groupLogsByDay } from "../utils/dateUtils";
 import { useAuth } from "../contexts/AuthContext";
+import apiService from "../services/apiService";
 
 const Dashboard = () => {
   const { isAuthenticated, loading } = useAuth();
-  const [logs, setLogs] = useState([
-    // Example logs for UI preview
-    {
-      id: "1",
-      food: "Protein Bar",
-      mood: "energised",
-      date: new Date(Date.now() - 86400000 * 2).toISOString(),
-    },
-    {
-      id: "2",
-      food: "Döner",
-      mood: "energised",
-      date: new Date(Date.now() - 86400000 * 2).toISOString(),
-    },
-    {
-      id: "3",
-      food: "Blueberries",
-      mood: "focused",
-      date: new Date(Date.now() - 86400000).toISOString(),
-    },
-    {
-      id: "4",
-      food: "Aloe Vera Juice",
-      mood: "calm",
-      date: new Date(Date.now() - 86400000).toISOString(),
-    },
-    {
-      id: "5",
-      food: "Energy Drink",
-      mood: "anxious",
-      date: new Date(Date.now() - 86400000).toISOString(),
-    },
-    {
-      id: "6",
-      food: "Mango",
-      mood: "happy",
-      date: new Date(Date.now() - 86400000 * 2).toISOString(),
-    },
-    {
-      id: "7",
-      food: "Grape Jelly",
-      mood: "sad",
-      date: new Date(Date.now() - 86400000 * 2).toISOString(),
-    },
-    {
-      id: "8",
-      food: "Doritos Whopper Flavour",
-      mood: "irritable",
-      date: new Date().toISOString(),
-    },
-    {
-      id: "9",
-      food: "Avocado Toast",
-      mood: "satisfied",
-      date: new Date().toISOString(),
-    },
-  ]);
+  const [logs, setLogs] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingLog, setEditingLog] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Fetch logs from backend
+  const fetchLogs = async () => {
+    setRefreshing(true);
+    try {
+      const response = await apiService.getFoodLogs();
+      if (response && response.success) {
+        // Map backend fields to frontend-expected fields
+        const mappedLogs = (response.data || []).map((log) => ({
+          ...log,
+          food: log.food_name,
+          date: log.meal_time,
+          image: log.image_base64,
+        }));
+        setLogs(mappedLogs);
+      }
+    } catch (e) {
+      console.error("Failed to fetch food logs:", e);
+      Alert.alert(
+        "Error",
+        "Unable to fetch food logs. Please try again later.",
+        [{ text: "OK" }]
+      );
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isAuthenticated && !loading) {
+      fetchLogs();
+    }
+  }, [isAuthenticated, loading]);
 
   // Redirect to home if not authenticated
   useEffect(() => {
@@ -82,7 +61,7 @@ const Dashboard = () => {
   }, [isAuthenticated, loading]);
 
   // Show loading while checking auth
-  if (loading) {
+  if (loading || refreshing) {
     return <LoadingScreen message="Loading dashboard..." />;
   }
 
@@ -92,17 +71,16 @@ const Dashboard = () => {
   }
 
   const grouped = groupLogsByDay(
-    [...logs].sort((a, b) => new Date(b.date) - new Date(a.date))
+    [...logs].sort(
+      (a, b) =>
+        new Date(b.meal_time || b.date) - new Date(a.meal_time || a.date)
+    )
   );
   const groupedEntries = Object.entries(grouped);
   const reversedGroupedEntries = groupedEntries.reverse();
 
-  const handleSaveLog = (log) => {
-    if (editingLog) {
-      setLogs((logs) => logs.map((l) => (l.id === log.id ? log : l)));
-    } else {
-      setLogs((logs) => [{ ...log, id: Date.now().toString() }, ...logs]);
-    }
+  const handleSaveLog = () => {
+    fetchLogs();
     setEditingLog(null);
   };
 

@@ -63,10 +63,10 @@ const TopBar = ({
   return (
     <View style={styles.header}>
       {showBack ? (
-        <TouchableOpacity 
-          onPress={handleBackPress} 
-          style={styles.backButton} 
-          accessible={true} 
+        <TouchableOpacity
+          onPress={handleBackPress}
+          style={styles.backButton}
+          accessible={true}
           accessibilityLabel="Go back"
         >
           <View style={styles.backArrowBox}>
@@ -77,7 +77,7 @@ const TopBar = ({
         customLeftIcon
       ) : showLogo ? (
         <TouchableOpacity onPress={handleLogoPress}>
-          <AppLogo width={40} height={40} />
+          <AppLogo width={50} height={50} />
         </TouchableOpacity>
       ) : (
         <View />
@@ -87,12 +87,12 @@ const TopBar = ({
         customRightIcon
       ) : showProfile ? (
         <TouchableOpacity onPress={handleProfilePress}>
-          <UserIcon width={36} height={36} />
+          <UserIcon width={40} height={40} />
         </TouchableOpacity>
       ) : null}
       {showSettings ? (
         <TouchableOpacity onPress={handleSettingsPress}>
-          <SettingsLogo width={36} height={36} />
+          <SettingsLogo width={40} height={40} />
         </TouchableOpacity>
       ) : null}
       {!showProfile && !showSettings && !customRightIcon ? <View /> : null}
