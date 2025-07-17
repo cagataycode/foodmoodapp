@@ -36,7 +36,12 @@ const Dashboard = () => {
         setLogs(mappedLogs);
       }
     } catch (e) {
-      // Optionally handle error
+      console.error("Failed to fetch food logs:", e);
+      Alert.alert(
+        "Error",
+        "Unable to fetch food logs. Please try again later.",
+        [{ text: "OK" }]
+      );
     } finally {
       setRefreshing(false);
     }
