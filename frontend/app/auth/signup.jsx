@@ -25,7 +25,7 @@ const SignUp = () => {
 
   const handleSignUp = async () => {
     if (!name || !email || !password) {
-      alert("Please fill in all fields");
+      Alert.alert("Error", "Please fill in all fields");
       return;
     }
     setIsLoading(true);
