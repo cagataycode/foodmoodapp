@@ -30,7 +30,7 @@ const SignUp = () => {
     }
     setIsLoading(true);
     try {
-      const result = await signUp(email, password);
+      const result = await signUp(name, email, password);
       if (result.success) {
         router.replace("/main/dashboard");
       } else {
