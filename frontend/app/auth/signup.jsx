@@ -24,7 +24,7 @@ const SignUp = () => {
   const { signUp } = useAuth();
 
   const handleSignUp = async () => {
-    if (!email || !password) {
+    if (!name || !email || !password) {
       alert("Please fill in all fields");
       return;
     }
