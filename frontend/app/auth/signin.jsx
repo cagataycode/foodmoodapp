@@ -12,6 +12,9 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import { useAuth } from "../contexts/AuthContext";
+import GoogleIcon from "../../assets/icons/google-icon.svg";
+import AppLogo from "../../assets/icons/app-logo.svg";
+import { Ionicons } from "@expo/vector-icons";
 
 const SignIn = () => {
   const [email, setEmail] = useState("");
@@ -68,53 +71,58 @@ const SignIn = () => {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <View style={styles.content}>
-          <Text style={styles.title}>Welcome Back</Text>
-          <Text style={styles.subtitle}>Sign in to your FoodMood account</Text>
-
-          <View style={styles.form}>
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Email</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter your email"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Password</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter your password"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                autoCapitalize="none"
-              />
-            </View>
-
-            <TouchableOpacity
-              style={[styles.button, isLoading && styles.buttonDisabled]}
-              onPress={handleSignIn}
-              disabled={isLoading}
-            >
-              <Text style={styles.buttonText}>
-                {isLoading ? "Signing In..." : "Sign In"}
-              </Text>
-            </TouchableOpacity>
+        <View style={styles.logoContainer}>
+          <AppLogo width={96} height={96} />
+        </View>
+        <View style={styles.form}>
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Email</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter your email"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
           </View>
-
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>Don't have an account? </Text>
-            <TouchableOpacity onPress={() => router.push("/auth/signup")}>
-              <Text style={styles.linkText}>Sign Up</Text>
-            </TouchableOpacity>
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Password</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter your password"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              autoCapitalize="none"
+            />
           </View>
+          <TouchableOpacity
+            style={styles.arrowButton}
+            onPress={handleSignIn}
+            disabled={isLoading}
+          >
+            <Ionicons name="arrow-forward" size={24} color="#fff" />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.dividerRow}>
+          <View style={styles.divider} />
+          <Text style={styles.orText}>Or</Text>
+          <View style={styles.divider} />
+        </View>
+        <TouchableOpacity
+          style={styles.googleButton}
+          onPress={() => alert("Google sign in not implemented in this demo.")}
+        >
+          <GoogleIcon width={22} height={22} style={{ marginRight: 8 }} />
+          <Text style={styles.googleButtonText}>Sign In with Google</Text>
+        </TouchableOpacity>
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>Don't have an account? </Text>
+          <TouchableOpacity onPress={() => router.push("/auth/signup")}>
+            <Text style={styles.linkText}>Sign Up</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -124,76 +132,107 @@ const SignIn = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8f9fa",
+    backgroundColor: "#fff",
   },
   scrollContainer: {
     flexGrow: 1,
     justifyContent: "center",
-  },
-  content: {
-    padding: 24,
     alignItems: "center",
+    paddingVertical: 32,
   },
-  title: {
-    fontSize: 32,
-    fontWeight: "bold",
-    color: "#2c3e50",
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: "#7f8c8d",
-    textAlign: "center",
-    marginBottom: 40,
+  logoContainer: {
+    alignItems: "center",
+    marginBottom: 72,
   },
   form: {
-    width: "100%",
+    width: "90%",
     maxWidth: 400,
+    alignSelf: "center",
+    marginBottom: 32,
   },
   inputContainer: {
-    marginBottom: 20,
+    marginBottom: 18,
   },
   label: {
-    fontSize: 16,
-    fontWeight: "600",
+    fontSize: 15,
     color: "#2c3e50",
-    marginBottom: 8,
+    marginBottom: 6,
+    marginLeft: 2,
+    fontWeight: "500",
   },
   input: {
-    backgroundColor: "#ffffff",
+    backgroundColor: "#fff",
     borderWidth: 1,
-    borderColor: "#e1e8ed",
-    borderRadius: 12,
-    padding: 16,
+    borderColor: "#d1d5db",
+    borderRadius: 10,
+    padding: 14,
     fontSize: 16,
     color: "#2c3e50",
   },
-  button: {
-    backgroundColor: "#3498db",
-    borderRadius: 12,
-    padding: 16,
+  arrowButton: {
+    backgroundColor: "#232b36",
+    borderRadius: 10,
+    width: 48,
+    height: 48,
     alignItems: "center",
-    marginTop: 20,
+    justifyContent: "center",
+    alignSelf: "center",
+    marginTop: 8,
+    marginBottom: 8,
   },
-  buttonDisabled: {
-    backgroundColor: "#bdc3c7",
+  dividerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    width: "80%",
+    alignSelf: "center",
+    marginVertical: 18,
   },
-  buttonText: {
-    color: "#ffffff",
-    fontSize: 18,
-    fontWeight: "600",
+  divider: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "#e1e8ed",
+  },
+  orText: {
+    marginHorizontal: 12,
+    color: "#7f8c8d",
+    fontSize: 15,
+  },
+  googleButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#e1e8ed",
+    borderRadius: 10,
+    paddingVertical: 14,
+    paddingHorizontal: 18,
+    width: "80%",
+    alignSelf: "center",
+    marginBottom: 18,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  googleButtonText: {
+    fontSize: 16,
+    color: "#2c3e50",
+    fontWeight: "500",
+    marginLeft: 8,
   },
   footer: {
     flexDirection: "row",
-    marginTop: 30,
+    marginTop: 18,
     alignItems: "center",
+    justifyContent: "center",
   },
   footerText: {
-    fontSize: 16,
+    fontSize: 15,
     color: "#7f8c8d",
   },
   linkText: {
-    fontSize: 16,
+    fontSize: 15,
     color: "#3498db",
     fontWeight: "600",
   },
