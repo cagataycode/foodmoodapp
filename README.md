@@ -24,13 +24,13 @@ foodmoodapp/
 │   └── supabase/           # Database configuration
 ├── frontend/               # React Native app
 │   ├── app/
-│   │   ├── auth/          # Authentication screens
-│   │   ├── main/          # Main app screens
-│   │   ├── components/    # Reusable components
-│   │   ├── services/      # API client
-│   │   └── contexts/      # React contexts
-│   └── assets/            # Images and icons
-└── README.md              # This file
+│   │   ├── auth/           # Authentication screens
+│   │   ├── main/           # Main app screens
+│   │   ├── components/     # Reusable components
+│   │   ├── services/       # API client
+│   │   └── contexts/       # React contexts
+│   └── assets/             # Images and icons
+└── README.md               # This file
 ```
 
 ## 🛠️ Tech Stack
@@ -40,7 +40,7 @@ foodmoodapp/
 - **Framework**: NestJS 10.x
 - **Language**: TypeScript 5.x
 - **Database**: Supabase (PostgreSQL)
-- **Authentication**: JWT + Passport
+- **Authentication**: Custom JWT (no Supabase Auth)
 - **Validation**: class-validator
 - **Documentation**: Swagger/OpenAPI
 
@@ -72,15 +72,9 @@ cd foodmoodapp
 
 ```bash
 cd backend
-
-# Install dependencies
 npm install
-
-# Environment setup
 cp env.example .env
 # Edit .env with your Supabase credentials
-
-# Start development server
 npm run start:dev
 ```
 
@@ -88,11 +82,7 @@ npm run start:dev
 
 ```bash
 cd frontend
-
-# Install dependencies
 npm install
-
-# Start Expo development server
 npm start
 ```
 
@@ -117,8 +107,7 @@ EXPO_PUBLIC_API_URL=http://localhost:3001/api
 
 ### Authentication
 
-- User registration and login
-- JWT token-based authentication
+- User registration and login (custom JWT, not Supabase Auth)
 - Profile management
 - Secure token storage
 
@@ -126,7 +115,7 @@ EXPO_PUBLIC_API_URL=http://localhost:3001/api
 
 - Log food items with timestamps
 - Track mood before/after eating
-- Add notes and photos
+- Add notes and photos (images stored as base64 in DB)
 - Search and filter logs
 
 ### Insights
@@ -174,14 +163,8 @@ EXPO_PUBLIC_API_URL=http://localhost:3001/api
 
 ```bash
 cd backend
-
-# Development server
 npm run start:dev
-
-# Run tests
 npm run test
-
-# Code quality
 npm run lint
 npm run format
 ```
@@ -190,14 +173,8 @@ npm run format
 
 ```bash
 cd frontend
-
-# Start Expo
 npm start
-
-# Run on iOS simulator
 npm run ios
-
-# Run on Android emulator
 npm run android
 ```
 
@@ -205,27 +182,23 @@ npm run android
 
 ```bash
 cd backend
-
-# Generate types from Supabase
 npm run types:generate
-
-# Push migrations
 npm run db:push
 ```
 
 ## 📚 Documentation
 
-- [Backend README](./backend/README.md) - Detailed backend documentation
-- [Frontend README](./frontend/README.md) - Frontend development guide
-- [API Documentation](http://localhost:3001/api/docs) - Swagger UI (when server is running)
+- [Backend README](./backend/README.md)
+- [Frontend README](./frontend/README.md)
+- [API Documentation](http://localhost:3001/api/docs)
 
 ## 🚀 Deployment
 
 ### Backend Deployment
 
-1. Build the application: `npm run build`
+1. Build: `npm run build`
 2. Set production environment variables
-3. Deploy to your preferred platform (Heroku, Vercel, etc.)
+3. Deploy to your preferred platform
 
 ### Frontend Deployment
 
@@ -245,8 +218,6 @@ npm run db:push
 This project is licensed under the MIT License.
 
 ## 🆘 Support
-
-For support and questions:
 
 - Check the documentation
 - Open an issue on GitHub

@@ -14,7 +14,7 @@ types/
 ├── common.types.ts       # Shared/common types
 ├── errors.types.ts       # Error classes and types
 ├── database.types.ts     # Database schema types
-└── README.md            # This file
+└── README.md             # This file
 ```
 
 ## 🏗️ Organization
@@ -27,7 +27,7 @@ types/
 
 ### **food-log.types.ts**
 
-- `FoodLog` - Food log entry interface
+- `FoodLog` - Food log entry interface (includes `image_base64` for storing images in the database)
 - `MoodType` - Available mood options
 - `CreateFoodLogRequest` - Food log creation request
 - `UpdateFoodLogRequest` - Food log update request
@@ -42,7 +42,7 @@ types/
 
 - `AuthRequest` - Authentication request
 - `AuthResponse` - Authentication response
-- `AuthenticatedRequest` - Request with user context
+- `AuthenticatedRequest` - Request with user context (custom JWT, not Supabase Auth)
 
 ### **common.types.ts**
 
@@ -62,7 +62,7 @@ types/
 
 - `Database` - Supabase database schema types
 
-## 🔧 Usage
+## 🛠️ Usage
 
 ### Import from barrel export (recommended)
 
@@ -95,7 +95,7 @@ export interface UserPreferences {
 }
 ```
 
-## 🎯 Best Practices
+## 🏅 Best Practices
 
 1. **Group related types** in the same file
 2. **Use descriptive names** for types and interfaces
@@ -119,4 +119,4 @@ The types were previously in a single `index.ts` file. The new structure provide
 - **Controllers**: Use types for request/response validation
 - **Services**: Use types for business logic
 - **DTOs**: Extend types for API documentation
-- **Database**: Types match Supabase schema
+- **Database**: Types match Supabase schema (database only, not buckets)
