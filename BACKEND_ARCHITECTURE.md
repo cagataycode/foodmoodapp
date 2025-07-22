@@ -7,9 +7,9 @@ This document explains the NestJS-based backend architecture for the FoodMood ap
 ### **Backend (`foodmoodapp/backend/`)**
 
 - **NestJS Framework**: Enterprise-grade Node.js framework with TypeScript
-- **Authentication Module**: JWT-based authentication with Passport
+- **Authentication Module**: Custom JWT-based authentication with Passport (no Supabase Auth)
 - **API Endpoints**: RESTful APIs with Swagger documentation
-- **Database Integration**: Supabase PostgreSQL with type safety
+- **Database Integration**: Supabase PostgreSQL with type safety (database only)
 - **Validation**: Request validation with class-validator
 - **Security**: Guards, interceptors, and middleware
 
@@ -45,7 +45,7 @@ backend/
 │   ├── types/                  # TypeScript type definitions
 │   ├── app.module.ts           # Root application module
 │   └── main.ts                # Application entry point
-├── supabase/                   # Supabase configuration
+├── supabase/                   # Supabase configuration (database only)
 ├── package.json
 └── env.example                 # Environment variables template
 ```
@@ -55,13 +55,13 @@ backend/
 ### **1. User Registration**
 
 ```
-Frontend → POST /api/auth/register → NestJS Controller → AuthService → Supabase → Database
+Frontend → POST /api/auth/register → NestJS Controller → AuthService → Supabase (DB) → Database
 ```
 
 ### **2. User Login**
 
 ```
-Frontend → POST /api/auth/login → NestJS Controller → AuthService → Supabase → JWT Token
+Frontend → POST /api/auth/login → NestJS Controller → AuthService → Supabase (DB) → JWT Token
 ```
 
 ### **3. Protected Requests**
@@ -122,23 +122,15 @@ Frontend → Bearer Token → NestJS Guard → Controller → Service → Respon
 }
 ```
 
-## 🔧 Setup Instructions
+## 🛠️ Setup Instructions
 
 ### **1. Backend Setup**
 
 ```bash
 cd foodmoodapp/backend
-
-# Install dependencies
 npm install
-
-# Copy environment file
 cp env.example .env
-
 # Edit .env with your Supabase credentials
-# Get service role key from Supabase dashboard
-
-# Start development server
 npm run start:dev
 ```
 
@@ -146,11 +138,7 @@ npm run start:dev
 
 ```bash
 cd foodmoodapp/frontend
-
-# Add environment variable
 echo "EXPO_PUBLIC_API_URL=http://localhost:3001/api" >> .env
-
-# Start frontend
 npm start
 ```
 
@@ -159,19 +147,12 @@ npm start
 **Backend (.env):**
 
 ```env
-# Server Configuration
 PORT=3001
 NODE_ENV=development
-
-# Supabase Configuration
 SUPABASE_URL=your_supabase_url
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 SUPABASE_ANON_KEY=your_anon_key
-
-# JWT Configuration
 JWT_SECRET=your_jwt_secret_key
-
-# CORS Configuration
 CORS_ORIGIN=http://localhost:3000
 ```
 
@@ -225,7 +206,7 @@ async login(@Body() loginDto: LoginDto) {
 }
 ```
 
-## 📊 Benefits of NestJS Architecture
+## 📈 Benefits of NestJS Architecture
 
 ### **1. Type Safety**
 
@@ -278,7 +259,6 @@ Visit: http://localhost:3001/api/docs
 curl -X POST http://localhost:3001/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{"email":"test@example.com","password":"password123","username":"testuser"}'
-
 # Test login
 curl -X POST http://localhost:3001/api/auth/login \
   -H "Content-Type: application/json" \
@@ -295,7 +275,7 @@ curl -X POST http://localhost:3001/api/auth/login \
 ## 🔄 Next Steps
 
 1. **Add Real-time Features** - WebSocket integration for live updates
-2. **Add File Upload** - Image handling for food photos
+2. **Add File Upload** - Image handling for food photos (currently images are stored as base64 in DB)
 3. **Add Analytics** - Usage tracking and metrics
 4. **Add Caching** - Redis integration for performance
 5. **Add Monitoring** - Application performance monitoring
@@ -334,7 +314,7 @@ curl -X POST http://localhost:3001/api/auth/login \
 - Monitors application status
 - Used for load balancers and monitoring
 
-## 🔧 Development Workflow
+## 🛠️ Development Workflow
 
 1. **Feature Development**: Create new modules following NestJS patterns
 2. **Testing**: Write unit and e2e tests for all features

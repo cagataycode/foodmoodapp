@@ -5,8 +5,8 @@ A React Native mobile application built with Expo that helps users track their f
 ## 🚀 Features
 
 - **Modern UI/UX**: Clean, intuitive interface with smooth animations
-- **Authentication**: Secure login/signup with JWT tokens
-- **Food Logging**: Log meals with mood tracking
+- **Authentication**: Secure login/signup with JWT tokens (custom backend, not Supabase Auth)
+- **Food Logging**: Log meals with mood tracking and base64 image storage
 - **Insights**: AI-powered food-mood pattern analysis
 - **Offline Support**: Works without internet connection
 - **Cross-Platform**: iOS and Android support
@@ -28,32 +28,32 @@ app/
 ├── _layout.jsx              # Root layout with AuthProvider
 ├── index.jsx               # Home page with auth redirect
 ├── auth/                   # Authentication screens
-│   ├── signin.jsx         # Sign in screen
-│   └── signup.jsx         # Sign up screen
+│   ├── signin.jsx          # Sign in screen
+│   └── signup.jsx          # Sign up screen
 ├── main/                   # Main app screens
-│   ├── dashboard.jsx      # Food log dashboard
-│   ├── profile.jsx        # User profile
-│   └── settings.jsx       # App settings
+│   ├── dashboard.jsx       # Food log dashboard
+│   ├── profile.jsx         # User profile
+│   └── settings.jsx        # App settings
 ├── components/             # Reusable components
-│   ├── index.js           # Component exports
-│   ├── TopBar.jsx         # Navigation header
-│   ├── LogCard.jsx        # Food log card
-│   ├── LogFoodModal.jsx   # Add/edit food log modal
-│   ├── MoodPalette.jsx    # Mood selection component
-│   └── ...                # Other components
-├── services/              # API and business logic
-│   └── apiService.js      # Backend API client
-├── contexts/              # React contexts
-│   └── AuthContext.jsx    # Authentication state
-├── utils/                 # Utility functions
-│   └── dateUtils.js       # Date formatting helpers
-├── constants/             # App constants
-│   └── moodColors.js      # Mood color definitions
-└── assets/                # Static assets
-    └── icons/             # SVG icons
+│   ├── index.js            # Component exports
+│   ├── TopBar.jsx          # Navigation header
+│   ├── LogCard.jsx         # Food log card
+│   ├── LogFoodModal.jsx    # Add/edit food log modal
+│   ├── MoodPalette.jsx     # Mood selection component
+│   └── ...                 # Other components
+├── services/               # API and business logic
+│   └── apiService.js       # Backend API client
+├── contexts/               # React contexts
+│   └── AuthContext.jsx     # Authentication state
+├── utils/                  # Utility functions
+│   └── dateUtils.js        # Date formatting helpers
+├── constants/              # App constants
+│   └── moodColors.js       # Mood color definitions
+└── assets/                 # Static assets
+    └── icons/              # SVG icons
 ```
 
-## 🔧 Prerequisites
+## 🧰 Prerequisites
 
 - Node.js 18+
 - npm or yarn
@@ -118,7 +118,7 @@ npm test           # Run tests (if configured)
 
 ## 🔐 Authentication
 
-The app uses JWT token-based authentication with the NestJS backend.
+The app uses JWT token-based authentication with the NestJS backend (custom, not Supabase Auth).
 
 ### Authentication Flow
 
@@ -132,7 +132,6 @@ The app uses JWT token-based authentication with the NestJS backend.
 
 ```javascript
 import { useAuth } from "../contexts/AuthContext";
-
 const { user, signIn, signOut, isAuthenticated } = useAuth();
 ```
 
@@ -143,6 +142,7 @@ const { user, signIn, signOut, isAuthenticated } = useAuth();
 - Add food items with timestamps
 - Track mood before and after eating
 - Add notes and descriptions
+- Add photos (stored as base64 in DB)
 - Search and filter logs
 - View statistics and trends
 
@@ -192,7 +192,7 @@ The app communicates with the NestJS backend through the `apiService.js`.
 - Food logs (CRUD operations, statistics)
 - Insights (generate, retrieve, mark as read)
 
-## 🎯 State Management
+## 🧩 State Management
 
 ### AuthContext
 
@@ -212,7 +212,7 @@ Component-level state for:
 - Loading states
 - Modal visibility
 
-## 📱 Navigation
+## 🧭 Navigation
 
 Uses Expo Router for file-based navigation:
 
@@ -265,7 +265,6 @@ npm test
 ```bash
 # Build for iOS
 expo build:ios
-
 # Build for Android
 expo build:android
 ```
@@ -276,7 +275,7 @@ expo build:android
 2. Submit to App Store Connect (iOS)
 3. Submit to Google Play Console (Android)
 
-## 🔧 Configuration
+## ⚙️ Configuration
 
 ### Environment Variables
 
@@ -287,27 +286,21 @@ expo build:android
 - `app.json`: Expo configuration
 - `metro.config.js`: Metro bundler configuration
 
-## 🐛 Troubleshooting
+## 🐞 Troubleshooting
 
 ### Common Issues
 
 1. **Metro bundler issues**
-
    ```bash
    npm start -- --clear
    ```
-
 2. **iOS Simulator not working**
-
    ```bash
    xcrun simctl boot "iPhone 14"
    ```
-
 3. **Android Emulator issues**
-
    - Ensure Android Studio is properly configured
    - Check AVD Manager for emulator setup
-
 4. **API connection issues**
    - Verify backend server is running
    - Check environment variables

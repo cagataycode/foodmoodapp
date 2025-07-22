@@ -1,12 +1,12 @@
 # FoodMood Backend - NestJS
 
-A modern, scalable backend for the FoodMood app built with NestJS, TypeScript, and Supabase.
+A modern, scalable backend for the FoodMood app built with NestJS, TypeScript, and Supabase (PostgreSQL as a database only).
 
 ## 🚀 Features
 
 - **NestJS Framework**: Enterprise-grade Node.js framework with TypeScript
-- **Supabase Integration**: PostgreSQL database with real-time subscriptions
-- **JWT Authentication**: Secure token-based authentication
+- **Supabase Integration**: PostgreSQL database (no Supabase Auth or Storage)
+- **JWT Authentication**: Secure token-based authentication (custom, not Supabase Auth)
 - **API Documentation**: Auto-generated Swagger/OpenAPI documentation
 - **Validation**: Request validation with class-validator
 - **Rate Limiting**: Built-in request throttling
@@ -18,19 +18,19 @@ A modern, scalable backend for the FoodMood app built with NestJS, TypeScript, a
 ```
 src/
 ├── auth/                    # Authentication module
-│   ├── guards/             # Route protection guards
-│   ├── strategies/         # Passport strategies
-│   ├── auth.controller.ts  # Auth endpoints
-│   ├── auth.service.ts     # Auth business logic
-│   └── auth.module.ts      # Auth module definition
-├── common/                 # Shared utilities
-│   └── dto/               # Data Transfer Objects
-├── food-logs/             # Food logging module
-├── insights/              # AI insights module
-├── health/                # Health check endpoints
-├── types/                 # TypeScript type definitions
-├── app.module.ts          # Root application module
-└── main.ts               # Application entry point
+│   ├── guards/              # Route protection guards
+│   ├── strategies/          # Passport strategies
+│   ├── auth.controller.ts   # Auth endpoints
+│   ├── auth.service.ts      # Auth business logic
+│   └── auth.module.ts       # Auth module definition
+├── common/                  # Shared utilities
+│   └── dto/                 # Data Transfer Objects
+├── food-logs/               # Food logging module
+├── insights/                # AI insights module
+├── health/                  # Health check endpoints
+├── types/                   # TypeScript type definitions
+├── app.module.ts            # Root application module
+└── main.ts                  # Application entry point
 ```
 
 ## 🛠️ Tech Stack
@@ -38,7 +38,7 @@ src/
 - **Framework**: NestJS 10.x
 - **Language**: TypeScript 5.x
 - **Database**: Supabase (PostgreSQL)
-- **Authentication**: JWT + Passport
+- **Authentication**: Custom JWT (no Supabase Auth)
 - **Validation**: class-validator + class-transformer
 - **Documentation**: Swagger/OpenAPI
 - **Testing**: Jest
@@ -46,33 +46,31 @@ src/
 
 ## 📋 Prerequisites
 
-- Node.js 18+ 
+- Node.js 18+
 - npm or yarn
-- Supabase account and project
+- Supabase account and project (for database only)
 
-## 🔧 Installation
+## 🛠️ Installation
 
 1. **Install dependencies**:
+
    ```bash
    npm install
    ```
 
 2. **Environment setup**:
+
    ```bash
    cp .env.example .env
    ```
-   
+
    Fill in your environment variables:
+
    ```env
-   # Supabase Configuration
    SUPABASE_URL=your_supabase_url
    SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
    SUPABASE_ANON_KEY=your_anon_key
-   
-   # JWT Configuration
    JWT_SECRET=your_jwt_secret_key
-   
-   # Server Configuration
    PORT=3001
    NODE_ENV=development
    CORS_ORIGIN=http://localhost:3000
@@ -82,10 +80,8 @@ src/
    ```bash
    # Start Supabase locally (if using local development)
    npm run supabase:dev
-   
    # Push database schema
    npm run db:push
-   
    # Generate TypeScript types
    npm run types:generate
    ```
@@ -93,34 +89,31 @@ src/
 ## 🚀 Development
 
 ### Start development server:
+
 ```bash
 npm run start:dev
 ```
 
 ### Build for production:
+
 ```bash
 npm run build
 npm run start:prod
 ```
 
 ### Code quality:
+
 ```bash
-# Lint code
 npm run lint
-
-# Format code
 npm run format
-
-# Run tests
 npm run test
-
-# Run tests with coverage
 npm run test:cov
 ```
 
 ## 📚 API Documentation
 
 Once the server is running, visit:
+
 - **Swagger UI**: http://localhost:3001/api/docs
 - **Health Check**: http://localhost:3001/api/health
 
@@ -159,23 +152,27 @@ All API requests and responses use DTOs for validation and documentation:
 ## 🧪 Testing
 
 ### Unit Tests:
+
 ```bash
 npm run test
 ```
 
 ### E2E Tests:
+
 ```bash
 npm run test:e2e
 ```
 
 ### Test Coverage:
+
 ```bash
 npm run test:cov
 ```
 
-## 📦 Deployment
+## 🚀 Deployment
 
 ### Environment Variables for Production:
+
 ```env
 NODE_ENV=production
 PORT=3001
@@ -186,16 +183,16 @@ CORS_ORIGIN=https://your-frontend-domain.com
 ```
 
 ### Build and Deploy:
+
 ```bash
 npm run build
 npm run start:prod
 ```
 
-## 🔄 Migration from Express
+## 🧩 Migration from Express
 
 This NestJS backend replaces the previous Express.js implementation with:
 
-### Benefits:
 - **Better Architecture**: Modular, scalable design
 - **Built-in Features**: Guards, interceptors, pipes, decorators
 - **Type Safety**: Enhanced TypeScript integration
@@ -203,13 +200,6 @@ This NestJS backend replaces the previous Express.js implementation with:
 - **Documentation**: Auto-generated API docs
 - **Validation**: Built-in request validation
 - **Error Handling**: Centralized exception filters
-
-### Key Changes:
-- Express routes → NestJS controllers
-- Express middleware → NestJS guards/interceptors
-- Manual validation → class-validator decorators
-- Manual JWT handling → Passport strategies
-- Manual error handling → Exception filters
 
 ## 🤝 Contributing
 

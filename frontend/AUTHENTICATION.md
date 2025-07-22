@@ -1,6 +1,6 @@
 # Authentication System
 
-This document explains how authentication is implemented in the FoodMood app using NestJS backend with JWT tokens.
+This document explains how authentication is implemented in the FoodMood app using a custom NestJS backend with JWT tokens (no Supabase Auth).
 
 ## Overview
 
@@ -30,7 +30,6 @@ Manages authentication state throughout the app using React Context.
 
 ```javascript
 import { useAuth } from "../contexts/AuthContext";
-
 const { user, signIn, signOut, isAuthenticated, updateProfile } = useAuth();
 ```
 
@@ -54,14 +53,12 @@ The app uses secure token storage for JWT tokens:
 **Development (In-Memory):**
 
 ```javascript
-// For development, tokens are stored in global.authToken
 global.authToken = token;
 ```
 
 **Production (Secure Storage):**
 
 ```javascript
-// For production, use SecureStore or similar
 import * as SecureStore from "expo-secure-store";
 await SecureStore.setItemAsync("authToken", token);
 ```
@@ -103,8 +100,8 @@ EXPO_PUBLIC_API_URL=http://localhost:3001/api
 
 Ensure your Supabase database has the required tables:
 
-- `auth.users` (managed by Supabase Auth)
-- `user_profiles` (custom table for user data)
+- `auth.users` (default table for managing user authentication, required for Supabase Auth)
+- `user_profiles` (custom table for storing additional user data, linked to `auth.users` by `user_id`)
 
 ### 4. App Structure
 
@@ -136,7 +133,7 @@ app/
 1. User navigates to signup page
 2. Enters email, password, and username
 3. Account is created in NestJS backend
-4. User profile is automatically created in Supabase
+4. User profile is automatically created in the database
 5. User is redirected to dashboard
 
 ### Sign In
@@ -178,7 +175,6 @@ The frontend communicates with these NestJS endpoints:
 ```javascript
 // Example login request
 const response = await apiService.login(email, password);
-
 // Response format
 {
   success: true,
@@ -199,11 +195,10 @@ const response = await apiService.login(email, password);
 JWT tokens are automatically included in API requests:
 
 ```javascript
-// Automatic token inclusion in requests
 const config = {
   headers: {
     "Content-Type": "application/json",
-    Authorization: `Bearer ${token}`, // Added automatically
+    Authorization: `Bearer ${token}`,
   },
 };
 ```
@@ -217,8 +212,7 @@ The authentication system includes comprehensive error handling:
 - Token expiration
 - Profile creation failures
 - Server errors
-
-All errors are displayed to users via Alert dialogs.
+  All errors are displayed to users via Alert dialogs.
 
 ## Security Features
 
@@ -245,25 +239,18 @@ To test the authentication system:
 ### Common Issues
 
 1. **"Invalid login credentials"**
-
    - Check email/password
    - Ensure account exists
    - Verify backend server is running
-
 2. **"Failed to create account"**
-
    - Check email format
    - Ensure password meets requirements
    - Verify backend configuration
-
 3. **"Network error"**
-
    - Check backend server is running
    - Verify API URL in environment variables
    - Check network connectivity
-
 4. **"Token expired"**
-
    - Token is automatically cleared
    - User is redirected to login
    - Re-authentication required
@@ -273,7 +260,6 @@ To test the authentication system:
 Enable debug logging by checking the browser console or React Native debugger:
 
 ```javascript
-// In apiService.js, errors are logged to console
 console.error("API Request Error:", error);
 ```
 
