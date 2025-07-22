@@ -100,7 +100,8 @@ EXPO_PUBLIC_API_URL=http://localhost:3001/api
 
 Ensure your Supabase database has the required tables:
 
-- `user_profiles` (custom table for user data)
+- `auth.users` (default table for managing user authentication, required for Supabase Auth)
+- `user_profiles` (custom table for storing additional user data, linked to `auth.users` by `user_id`)
 
 ### 4. App Structure
 
