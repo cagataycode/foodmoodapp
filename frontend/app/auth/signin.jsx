@@ -101,7 +101,7 @@ const SignIn = () => {
             onPress={handleSignIn}
             disabled={isLoading}
             loading={isLoading}
-            style={{ marginTop: 16 }}
+            style={styles.signInButton}
           >
             Sign In
           </PrimaryButton>
@@ -116,9 +116,7 @@ const SignIn = () => {
           style={{ flexDirection: "row", alignItems: "center", marginTop: 16 }}
         >
           <GoogleIcon width={22} height={22} style={{ marginRight: 8 }} />
-          <Text style={{ color: "#3498db", fontSize: 18, fontWeight: "700" }}>
-            Sign In with Google
-          </Text>
+          <Text style={styles.googleButtonText}>Sign In with Google</Text>
         </SecondaryButton>
         <View style={styles.footer}>
           <Text style={styles.footerText}>Don't have an account? </Text>
@@ -197,31 +195,14 @@ const styles = StyleSheet.create({
   orText: {
     marginHorizontal: 12,
     color: "#7f8c8d",
-    fontSize: 15,
   },
-  googleButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#e1e8ed",
-    borderRadius: 10,
-    paddingVertical: 14,
-    paddingHorizontal: 18,
-    width: "80%",
-    alignSelf: "center",
-    marginBottom: 18,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 2,
-    elevation: 1,
+  signInButton: {
+    marginTop: 16,
   },
   googleButtonText: {
-    fontSize: 16,
-    color: "#2c3e50",
-    fontWeight: "500",
-    marginLeft: 8,
+    color: "#3498db",
+    fontSize: 18,
+    fontWeight: "700",
   },
   footer: {
     flexDirection: "row",
