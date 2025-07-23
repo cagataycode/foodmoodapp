@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { View, StyleSheet, ScrollView, SafeAreaView } from "react-native";
 import { router } from "expo-router";
 import {
@@ -83,6 +83,7 @@ const Dashboard = () => {
     title: day,
     data: dayLogs,
   }));
+  const reversedGroups = useMemo(() => [...groups].reverse(), [groups]);
 
   const handleSaveLog = () => {
     fetchLogs();
@@ -101,7 +102,7 @@ const Dashboard = () => {
             <EmptyState />
           ) : (
             <DayGroup
-              groups={[...groups].reverse()}
+              groups={reversedGroups}
               onEditLog={(log) => {
                 setEditingLog(log);
                 setModalVisible(true);
