@@ -14,7 +14,10 @@ import { router } from "expo-router";
 import { useAuth } from "../contexts/AuthContext";
 import GoogleIcon from "../../assets/icons/google-icon.svg";
 import AppLogo from "../../assets/icons/app-logo.svg";
-import { Ionicons } from "@expo/vector-icons";
+import PrimaryButton from "../components/buttons/PrimaryButton";
+import SecondaryButton from "../components/buttons/SecondaryButton";
+import TextButton from "../components/buttons/TextButton";
+import FormField from "../components/form/FormField";
 
 const SignIn = () => {
   const [email, setEmail] = useState("");
@@ -75,54 +78,51 @@ const SignIn = () => {
           <AppLogo width={96} height={96} />
         </View>
         <View style={styles.form}>
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Email</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter your email"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-          </View>
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Password</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter your password"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              autoCapitalize="none"
-            />
-          </View>
-          <TouchableOpacity
-            style={styles.arrowButton}
+          <FormField
+            label="Email"
+            value={email}
+            onChangeText={setEmail}
+            placeholder="Enter your email"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
+            style={{ marginBottom: 18 }}
+          />
+          <FormField
+            label="Password"
+            value={password}
+            onChangeText={setPassword}
+            placeholder="Enter your password"
+            secureTextEntry
+            autoCapitalize="none"
+            style={{ marginBottom: 18 }}
+          />
+          <PrimaryButton
             onPress={handleSignIn}
             disabled={isLoading}
+            loading={isLoading}
+            style={styles.signInButton}
           >
-            <Ionicons name="arrow-forward" size={24} color="#fff" />
-          </TouchableOpacity>
+            Sign In
+          </PrimaryButton>
         </View>
         <View style={styles.dividerRow}>
           <View style={styles.divider} />
           <Text style={styles.orText}>Or</Text>
           <View style={styles.divider} />
         </View>
-        <TouchableOpacity
-          style={styles.googleButton}
+        <SecondaryButton
           onPress={() => alert("Google sign in not implemented in this demo.")}
+          style={{ flexDirection: "row", alignItems: "center", marginTop: 16 }}
         >
           <GoogleIcon width={22} height={22} style={{ marginRight: 8 }} />
           <Text style={styles.googleButtonText}>Sign In with Google</Text>
-        </TouchableOpacity>
+        </SecondaryButton>
         <View style={styles.footer}>
           <Text style={styles.footerText}>Don't have an account? </Text>
-          <TouchableOpacity onPress={() => router.push("/auth/signup")}>
-            <Text style={styles.linkText}>Sign Up</Text>
-          </TouchableOpacity>
+          <TextButton onPress={() => router.push("/auth/signup")}>
+            Sign Up
+          </TextButton>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -195,31 +195,14 @@ const styles = StyleSheet.create({
   orText: {
     marginHorizontal: 12,
     color: "#7f8c8d",
-    fontSize: 15,
   },
-  googleButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#e1e8ed",
-    borderRadius: 10,
-    paddingVertical: 14,
-    paddingHorizontal: 18,
-    width: "80%",
-    alignSelf: "center",
-    marginBottom: 18,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 2,
-    elevation: 1,
+  signInButton: {
+    marginTop: 16,
   },
   googleButtonText: {
-    fontSize: 16,
-    color: "#2c3e50",
-    fontWeight: "500",
-    marginLeft: 8,
+    color: "#3498db",
+    fontSize: 18,
+    fontWeight: "700",
   },
   footer: {
     flexDirection: "row",

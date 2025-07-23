@@ -12,6 +12,9 @@ import {
 import { router } from "expo-router";
 import { useAuth } from "../contexts/AuthContext";
 import { LoadingScreen } from "../components";
+import PrimaryButton from "../components/buttons/PrimaryButton";
+import SecondaryButton from "../components/buttons/SecondaryButton";
+import TextButton from "../components/buttons/TextButton";
 
 const Settings = () => {
   const { isAuthenticated, loading, signOut, user } = useAuth();
@@ -130,9 +133,12 @@ const Settings = () => {
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()}>
-            <Text style={styles.backButton}>← Back</Text>
-          </TouchableOpacity>
+          <TextButton
+            onPress={() => router.back()}
+            style={{ alignSelf: "flex-start" }}
+          >
+            ← Back
+          </TextButton>
           <Text style={styles.title}>Settings</Text>
           <View style={{ width: 50 }} />
         </View>
@@ -244,21 +250,12 @@ const Settings = () => {
           </View>
 
           <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={[styles.button, styles.logoutButton]}
-              onPress={handleLogout}
-            >
-              <Text style={styles.buttonText}>Logout</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.button, styles.deleteButton]}
-              onPress={handleDeleteAccount}
-            >
-              <Text style={[styles.buttonText, styles.deleteButtonText]}>
-                Delete Account
-              </Text>
-            </TouchableOpacity>
+            <PrimaryButton onPress={handleLogout} style={{ marginBottom: 12 }}>
+              Logout
+            </PrimaryButton>
+            <SecondaryButton onPress={handleDeleteAccount}>
+              Delete Account
+            </SecondaryButton>
           </View>
         </ScrollView>
       </SafeAreaView>

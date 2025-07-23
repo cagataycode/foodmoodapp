@@ -2,8 +2,10 @@ import { getApiUrl } from "../config/api";
 
 const API_BASE_URL = getApiUrl();
 
-// Debug configuration - set to false for production
-const DEBUG_MODE = __DEV__;
+// Debug configuration
+// - set to __DEV__ for development
+// - set to false for production
+const DEBUG_MODE = false;
 
 // Simple logger utility
 const logger = {

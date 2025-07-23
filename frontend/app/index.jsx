@@ -2,6 +2,8 @@ import React from "react";
 import { View, TouchableOpacity, Text, StyleSheet } from "react-native";
 import { router } from "expo-router";
 import AppLogo from "../assets/icons/app-logo.svg";
+import PrimaryButton from "./components/buttons/PrimaryButton";
+import SecondaryButton from "./components/buttons/SecondaryButton";
 
 export default function Index() {
   return (
@@ -9,18 +11,18 @@ export default function Index() {
       <View style={styles.logoContainer}>
         <AppLogo width={96} height={96} />
       </View>
-      <TouchableOpacity
-        style={styles.primaryButton}
+      <PrimaryButton
         onPress={() => router.push("/auth/signin")}
+        style={{ marginBottom: 18, width: 260 }}
       >
-        <Text style={styles.primaryButtonText}>Sign In</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={styles.secondaryButton}
+        Sign In
+      </PrimaryButton>
+      <SecondaryButton
         onPress={() => router.push("/auth/signup")}
+        style={{ width: 260 }}
       >
-        <Text style={styles.secondaryButtonText}>Sign Up</Text>
-      </TouchableOpacity>
+        Sign Up
+      </SecondaryButton>
     </View>
   );
 }

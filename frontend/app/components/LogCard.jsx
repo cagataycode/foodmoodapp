@@ -3,12 +3,13 @@ import { View, Text, TouchableOpacity, Image, StyleSheet } from "react-native";
 import EditIcon from "../../assets/icons/edit-icon.svg";
 import { getMoodColors } from "../constants/moodColors";
 import { formatTime } from "../utils/dateUtils";
+import Card from "./card/Card";
 
 const LogCard = ({ log, onEdit }) => {
   const moodColors = getMoodColors(log.moods || (log.mood ? [log.mood] : []));
 
   return (
-    <View style={styles.logCardContainer}>
+    <Card style={styles.logCardContainer}>
       <View
         style={[
           styles.logCardBg,
@@ -75,7 +76,7 @@ const LogCard = ({ log, onEdit }) => {
           </TouchableOpacity>
         </View>
       </View>
-    </View>
+    </Card>
   );
 };
 
@@ -84,7 +85,7 @@ const styles = StyleSheet.create({
     position: "relative",
     borderRadius: 12,
     overflow: "hidden",
-    marginBottom: 10,
+    marginBottom: 4,
     backgroundColor: "#fff",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
