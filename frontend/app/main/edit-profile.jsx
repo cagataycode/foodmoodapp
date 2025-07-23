@@ -3,14 +3,16 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   SafeAreaView,
   ScrollView,
   Alert,
 } from "react-native";
 import { router } from "expo-router";
-import { TopBar, Avatar, ProfileField } from "../components";
+import { TopBar, Avatar } from "../components";
 import { useAuth } from "../contexts/AuthContext";
+import PrimaryButton from "../components/buttons/PrimaryButton";
+import SecondaryButton from "../components/buttons/SecondaryButton";
+import FormField from "../components/form/FormField";
 
 const EditProfile = () => {
   const { isAuthenticated, loading, user, updateProfile } = useAuth();
@@ -74,17 +76,6 @@ const EditProfile = () => {
     router.back();
   };
 
-  const renderField = (label, key, placeholder, keyboardType = "default") => (
-    <ProfileField
-      label={label}
-      value={tempProfile[key]?.toString() || ""}
-      isEditing={true}
-      onChangeText={(text) => setTempProfile({ ...tempProfile, [key]: text })}
-      placeholder={placeholder}
-      keyboardType={keyboardType}
-    />
-  );
-
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
@@ -96,48 +87,78 @@ const EditProfile = () => {
           </View>
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Personal Information</Text>
-            {renderField("Username", "username", "Enter your username")}
-            {renderField("Email", "email", "Enter your email", "email-address")}
-            {renderField("Age", "age", "Enter your age", "numeric")}
-          </View>
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Physical Information</Text>
-            {renderField(
-              "Height (cm)",
-              "height",
-              "Enter your height",
-              "numeric"
-            )}
-            {renderField(
-              "Weight (kg)",
-              "weight",
-              "Enter your weight",
-              "numeric"
-            )}
-          </View>
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Goals</Text>
-            {renderField("Goal", "goal", "Enter your health goal")}
+            <FormField
+              label="Username"
+              value={tempProfile.username}
+              onChangeText={(text) =>
+                setTempProfile({ ...tempProfile, username: text })
+              }
+              placeholder="Enter your username"
+              style={{ marginBottom: 18 }}
+            />
+            <FormField
+              label="Email"
+              value={tempProfile.email}
+              onChangeText={(text) =>
+                setTempProfile({ ...tempProfile, email: text })
+              }
+              placeholder="Enter your email"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              style={{ marginBottom: 18 }}
+            />
+            <FormField
+              label="Age"
+              value={tempProfile.age}
+              onChangeText={(text) =>
+                setTempProfile({ ...tempProfile, age: text })
+              }
+              placeholder="Enter your age"
+              keyboardType="numeric"
+              style={{ marginBottom: 18 }}
+            />
+            <FormField
+              label="Height"
+              value={tempProfile.height}
+              onChangeText={(text) =>
+                setTempProfile({ ...tempProfile, height: text })
+              }
+              placeholder="Enter your height (cm)"
+              keyboardType="numeric"
+              style={{ marginBottom: 18 }}
+            />
+            <FormField
+              label="Weight"
+              value={tempProfile.weight}
+              onChangeText={(text) =>
+                setTempProfile({ ...tempProfile, weight: text })
+              }
+              placeholder="Enter your weight (kg)"
+              keyboardType="numeric"
+              style={{ marginBottom: 18 }}
+            />
+            <FormField
+              label="Goal"
+              value={tempProfile.goal}
+              onChangeText={(text) =>
+                setTempProfile({ ...tempProfile, goal: text })
+              }
+              placeholder="Enter your goal"
+              style={{ marginBottom: 18 }}
+            />
           </View>
           <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={[styles.button, styles.saveButton]}
+            <PrimaryButton
               onPress={handleSave}
               disabled={isLoading}
+              loading={isLoading}
+              style={{ marginBottom: 12 }}
             >
-              <Text style={styles.buttonText}>
-                {isLoading ? "Saving..." : "Save Changes"}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.button, styles.cancelButton]}
-              onPress={handleCancel}
-              disabled={isLoading}
-            >
-              <Text style={[styles.buttonText, styles.cancelButtonText]}>
-                Cancel
-              </Text>
-            </TouchableOpacity>
+              Save Changes
+            </PrimaryButton>
+            <SecondaryButton onPress={handleCancel} disabled={isLoading}>
+              Cancel
+            </SecondaryButton>
           </View>
         </ScrollView>
       </SafeAreaView>

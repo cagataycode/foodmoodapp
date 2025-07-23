@@ -27,10 +27,16 @@ const Dashboard = () => {
       const response = await apiService.getFoodLogs();
       if (response && response.success) {
         // Map backend fields to frontend-expected fields
-        const mappedLogs = (response.data || []).map((log) => ({
+        const mappedLogs = (
+          Array.isArray(response.data) ? response.data : []
+        ).map((log) => ({
           ...log,
           food: log.food_name,
-          date: log.meal_time,
+          date:
+            log.meal_time ||
+            log.date ||
+            log.created_at ||
+            new Date().toISOString(),
           image: log.image_base64,
         }));
         setLogs(mappedLogs);
@@ -70,14 +76,13 @@ const Dashboard = () => {
     return null;
   }
 
-  const grouped = groupLogsByDay(
-    [...logs].sort(
-      (a, b) =>
-        new Date(b.meal_time || b.date) - new Date(a.meal_time || a.date)
-    )
-  );
+  // Prepare groups for GroupedList
+  const grouped = groupLogsByDay(logs || []);
   const groupedEntries = Object.entries(grouped);
-  const reversedGroupedEntries = groupedEntries.reverse();
+  const groups = groupedEntries.map(([day, dayLogs]) => ({
+    title: day,
+    data: dayLogs,
+  }));
 
   const handleSaveLog = () => {
     fetchLogs();
@@ -92,20 +97,16 @@ const Dashboard = () => {
       >
         <TopBar showLogo={true} showProfile={true} />
         <ScrollView style={styles.content}>
-          {reversedGroupedEntries.length === 0 ? (
+          {groups.length === 0 ? (
             <EmptyState />
           ) : (
-            reversedGroupedEntries.map(([day, dayLogs]) => (
-              <DayGroup
-                key={day}
-                day={day}
-                logs={dayLogs}
-                onEditLog={(log) => {
-                  setEditingLog(log);
-                  setModalVisible(true);
-                }}
-              />
-            ))
+            <DayGroup
+              groups={[...groups].reverse()}
+              onEditLog={(log) => {
+                setEditingLog(log);
+                setModalVisible(true);
+              }}
+            />
           )}
         </ScrollView>
       </SafeAreaView>
