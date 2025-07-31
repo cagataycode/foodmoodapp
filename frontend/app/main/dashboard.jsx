@@ -1,5 +1,11 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { View, StyleSheet, ScrollView, SafeAreaView } from "react-native";
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  SafeAreaView,
+  Alert,
+} from "react-native";
 import { router } from "expo-router";
 import {
   LogFoodModal,
@@ -19,6 +25,15 @@ const Dashboard = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [editingLog, setEditingLog] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
+
+  // Prepare groups for GroupedList - moved to top with other hooks
+  const grouped = groupLogsByDay(logs || []);
+  const groupedEntries = Object.entries(grouped);
+  const groups = groupedEntries.map(([day, dayLogs]) => ({
+    title: day,
+    data: dayLogs,
+  }));
+  const reversedGroups = useMemo(() => [...groups].reverse(), [groups]);
 
   // Fetch logs from backend
   const fetchLogs = async () => {
@@ -66,6 +81,11 @@ const Dashboard = () => {
     }
   }, [isAuthenticated, loading]);
 
+  const handleSaveLog = () => {
+    fetchLogs();
+    setEditingLog(null);
+  };
+
   // Show loading while checking auth
   if (loading || refreshing) {
     return <LoadingScreen message="Loading dashboard..." />;
@@ -75,20 +95,6 @@ const Dashboard = () => {
   if (!isAuthenticated) {
     return null;
   }
-
-  // Prepare groups for GroupedList
-  const grouped = groupLogsByDay(logs || []);
-  const groupedEntries = Object.entries(grouped);
-  const groups = groupedEntries.map(([day, dayLogs]) => ({
-    title: day,
-    data: dayLogs,
-  }));
-  const reversedGroups = useMemo(() => [...groups].reverse(), [groups]);
-
-  const handleSaveLog = () => {
-    fetchLogs();
-    setEditingLog(null);
-  };
 
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
