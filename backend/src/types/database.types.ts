@@ -2,7 +2,6 @@
 
 import { User } from './user.types';
 import { FoodLog } from './food-log.types';
-import { Insight } from './insight.types';
 
 // Database types (will be generated from Supabase)
 export interface Database {
@@ -17,11 +16,6 @@ export interface Database {
         Row: User;
         Insert: Omit<User, 'id' | 'created_at' | 'updated_at'>;
         Update: Partial<Omit<User, 'id' | 'created_at' | 'updated_at'>>;
-      };
-      insights: {
-        Row: Insight;
-        Insert: Omit<Insight, 'id' | 'created_at'>;
-        Update: Partial<Omit<Insight, 'id' | 'created_at'>>;
       };
     };
   };

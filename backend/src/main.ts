@@ -84,7 +84,6 @@ async function bootstrap() {
   console.log(`🔗 Health check: http://localhost:${port}/api/health`);
   console.log(`🔐 Auth API: http://localhost:${port}/api/auth`);
   console.log(`🍽️  Food Logs API: http://localhost:${port}/api/food-logs`);
-  console.log(`💡 Insights API: http://localhost:${port}/api/insights`);
   console.log(`📚 API Documentation: http://localhost:${port}/api/docs`);
 }
 
