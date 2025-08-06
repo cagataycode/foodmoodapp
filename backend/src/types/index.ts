@@ -7,9 +7,6 @@ export * from './user.types';
 // Food log types
 export * from './food-log.types';
 
-// Insight types
-export * from './insight.types';
-
 // Authentication types
 export * from './auth.types';
 
