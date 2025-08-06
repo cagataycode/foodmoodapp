@@ -76,7 +76,7 @@ export class FoodLogsService {
     }
 
     if (filters.moods && filters.moods.length > 0) {
-      query = query.in('mood', filters.moods);
+      query = query.in('moods', filters.moods);
     }
 
     if (filters.food_name) {
@@ -203,9 +203,12 @@ export class FoodLogsService {
       {} as Record<string, number>,
     );
 
-    const mostCommonMood = Object.entries(moodCounts).reduce((a, b) =>
-      moodCounts[a[0]] > moodCounts[b[0]] ? a : b,
-    )?.[0];
+    const mostCommonMood =
+      Object.entries(moodCounts).length > 0
+        ? Object.entries(moodCounts).reduce((a, b) =>
+            moodCounts[a[0]] > moodCounts[b[0]] ? a : b,
+          )?.[0]
+        : undefined;
 
     const averageMoodScore = this.calculateMoodScore(logs);
 
