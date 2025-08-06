@@ -1,15 +1,19 @@
-import { Injectable, UnauthorizedException, ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import * as bcrypt from 'bcryptjs';
-import { 
-  User, 
-  AuthRequest, 
-  AuthResponse, 
-  CreateUserRequest, 
+import {
+  User,
+  AuthRequest,
+  AuthResponse,
+  CreateUserRequest,
   UpdateUserRequest,
-  Database
+  Database,
 } from '../types';
 
 @Injectable()
@@ -21,7 +25,9 @@ export class AuthService {
     private configService: ConfigService,
   ) {
     const supabaseUrl = this.configService.get<string>('SUPABASE_URL');
-    const supabaseKey = this.configService.get<string>('SUPABASE_SERVICE_ROLE_KEY');
+    const supabaseKey = this.configService.get<string>(
+      'SUPABASE_SERVICE_ROLE_KEY',
+    );
 
     if (!supabaseUrl || !supabaseKey) {
       throw new Error('Missing Supabase configuration');
@@ -33,7 +39,9 @@ export class AuthService {
   /**
    * Register a new user
    */
-  async register(userData: CreateUserRequest & { password: string }): Promise<AuthResponse> {
+  async register(
+    userData: CreateUserRequest & { password: string },
+  ): Promise<AuthResponse> {
     const { email, password, username } = userData;
 
     // Check if user already exists
@@ -48,14 +56,17 @@ export class AuthService {
     }
 
     // Create user in Supabase Auth
-    const { data: authUser, error: authError } = await this.supabase.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true
-    });
+    const { data: authUser, error: authError } =
+      await this.supabase.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+      });
 
     if (authError || !authUser.user) {
-      throw new UnauthorizedException(authError?.message || 'Failed to create user');
+      throw new UnauthorizedException(
+        authError?.message || 'Failed to create user',
+      );
     }
 
     // Create user profile
@@ -65,7 +76,7 @@ export class AuthService {
         id: authUser.user.id,
         email,
         username: username || null,
-        subscription_tier: 'free'
+        subscription_tier: 'free',
       })
       .select()
       .single();
@@ -79,7 +90,7 @@ export class AuthService {
 
     return {
       user: profile,
-      token
+      token,
     };
   }
 
@@ -90,10 +101,11 @@ export class AuthService {
     const { email, password } = credentials;
 
     // Authenticate with Supabase
-    const { data: authData, error: authError } = await this.supabase.auth.signInWithPassword({
-      email,
-      password
-    });
+    const { data: authData, error: authError } =
+      await this.supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
     if (authError || !authData.user) {
       throw new UnauthorizedException('Invalid email or password');
@@ -115,7 +127,7 @@ export class AuthService {
 
     return {
       user: profile,
-      token
+      token,
     };
   }
 
@@ -139,7 +151,10 @@ export class AuthService {
   /**
    * Update user profile
    */
-  async updateUser(userId: string, updateData: UpdateUserRequest): Promise<User> {
+  async updateUser(
+    userId: string,
+    updateData: UpdateUserRequest,
+  ): Promise<User> {
     const { data: user, error } = await this.supabase
       .from('user_profiles')
       .update(updateData)
@@ -169,7 +184,8 @@ export class AuthService {
     }
 
     // Delete user from Supabase Auth
-    const { error: authError } = await this.supabase.auth.admin.deleteUser(userId);
+    const { error: authError } =
+      await this.supabase.auth.admin.deleteUser(userId);
 
     if (authError) {
       throw new UnauthorizedException('Failed to delete user account');
@@ -186,4 +202,4 @@ export class AuthService {
       expiresIn: '7d',
     });
   }
-} 
+}
