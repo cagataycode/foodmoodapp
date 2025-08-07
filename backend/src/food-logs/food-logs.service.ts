@@ -1,7 +1,7 @@
 import {
   Injectable,
   NotFoundException,
-  ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
@@ -11,7 +11,10 @@ import {
   UpdateFoodLogRequest,
   FoodLogFilters,
   Database,
+  MoodScore,
 } from '../types';
+
+const MAX_MOODS_PER_LOG = 4;
 
 @Injectable()
 export class FoodLogsService {
@@ -22,40 +25,26 @@ export class FoodLogsService {
     const supabaseKey = this.configService.get<string>(
       'SUPABASE_SERVICE_ROLE_KEY',
     );
-
-    if (!supabaseUrl || !supabaseKey) {
+    if (!supabaseUrl || !supabaseKey)
       throw new Error('Missing Supabase configuration');
-    }
-
     this.supabase = createClient<Database>(supabaseUrl, supabaseKey);
   }
 
-  /**
-   * Create a new food log
-   */
   async createFoodLog(
     userId: string,
     foodLogData: CreateFoodLogRequest,
   ): Promise<FoodLog> {
+    const processedData = this.processMoodData(foodLogData);
     const { data: foodLog, error } = await this.supabase
       .from('food_logs')
-      .insert({
-        user_id: userId,
-        ...foodLogData,
-      })
+      .insert({ user_id: userId, ...processedData })
       .select()
       .single();
-
-    if (error || !foodLog) {
-      throw new Error('Failed to create food log');
-    }
-
+    if (error || !foodLog)
+      throw new BadRequestException('Failed to create food log');
     return foodLog;
   }
 
-  /**
-   * Get food logs for a user with optional filters
-   */
   async getFoodLogs(
     userId: string,
     filters: FoodLogFilters = {},
@@ -66,47 +55,23 @@ export class FoodLogsService {
       .eq('user_id', userId)
       .order('meal_time', { ascending: false });
 
-    // Apply filters
-    if (filters.start_date) {
-      query = query.gte('meal_time', filters.start_date);
-    }
-
-    if (filters.end_date) {
-      query = query.lte('meal_time', filters.end_date);
-    }
-
-    if (filters.moods && filters.moods.length > 0) {
-      query = query.in('moods', filters.moods);
-    }
-
-    if (filters.food_name) {
+    if (filters.start_date) query = query.gte('meal_time', filters.start_date);
+    if (filters.end_date) query = query.lte('meal_time', filters.end_date);
+    if (filters.moods?.length > 0) query = query.in('moods', filters.moods);
+    if (filters.food_name)
       query = query.ilike('food_name', `%${filters.food_name}%`);
-    }
-
-    // Apply pagination
-    if (filters.limit) {
-      query = query.limit(filters.limit);
-    }
-
-    if (filters.offset) {
+    if (filters.limit) query = query.limit(filters.limit);
+    if (filters.offset)
       query = query.range(
         filters.offset,
         filters.offset + (filters.limit || 10) - 1,
       );
-    }
 
     const { data: foodLogs, error } = await query;
-
-    if (error) {
-      throw new Error('Failed to fetch food logs');
-    }
-
+    if (error) throw new BadRequestException('Failed to fetch food logs');
     return foodLogs || [];
   }
 
-  /**
-   * Get a specific food log by ID
-   */
   async getFoodLogById(userId: string, foodLogId: string): Promise<FoodLog> {
     const { data: foodLog, error } = await this.supabase
       .from('food_logs')
@@ -114,146 +79,71 @@ export class FoodLogsService {
       .eq('id', foodLogId)
       .eq('user_id', userId)
       .single();
-
-    if (error || !foodLog) {
-      throw new NotFoundException('Food log not found');
-    }
-
+    if (error || !foodLog) throw new NotFoundException('Food log not found');
     return foodLog;
   }
 
-  /**
-   * Update a food log
-   */
   async updateFoodLog(
     userId: string,
     foodLogId: string,
     updateData: UpdateFoodLogRequest,
   ): Promise<FoodLog> {
-    // First check if the food log exists and belongs to the user
     await this.getFoodLogById(userId, foodLogId);
-
+    const processedData = this.processMoodData(updateData);
     const { data: foodLog, error } = await this.supabase
       .from('food_logs')
-      .update(updateData)
+      .update(processedData)
       .eq('id', foodLogId)
       .eq('user_id', userId)
       .select()
       .single();
-
-    if (error || !foodLog) {
-      throw new Error('Failed to update food log');
-    }
-
+    if (error || !foodLog)
+      throw new BadRequestException('Failed to update food log');
     return foodLog;
   }
 
-  /**
-   * Delete a food log
-   */
   async deleteFoodLog(userId: string, foodLogId: string): Promise<void> {
-    // First check if the food log exists and belongs to the user
     await this.getFoodLogById(userId, foodLogId);
-
     const { error } = await this.supabase
       .from('food_logs')
       .delete()
       .eq('id', foodLogId)
       .eq('user_id', userId);
-
-    if (error) {
-      throw new Error('Failed to delete food log');
-    }
+    if (error) throw new BadRequestException('Failed to delete food log');
   }
 
-  /**
-   * Get food log statistics for a user
-   */
   async getFoodLogStats(userId: string, startDate?: string, endDate?: string) {
     let query = this.supabase
       .from('food_logs')
       .select('*')
       .eq('user_id', userId);
-
-    if (startDate) {
-      query = query.gte('meal_time', startDate);
-    }
-
-    if (endDate) {
-      query = query.lte('meal_time', endDate);
-    }
-
-    const { data: foodLogs, error } = await query;
-
-    if (error) {
-      throw new Error('Failed to fetch food log statistics');
-    }
-
-    const logs = foodLogs || [];
-
-    // Calculate statistics
-    const totalLogs = logs.length;
-    const moodCounts = logs.reduce(
-      (acc, log) => {
-        log.moods.forEach(mood => {
-          acc[mood] = (acc[mood] || 0) + 1;
-        });
-        return acc;
-      },
-      {} as Record<string, number>,
-    );
-
-    const mostCommonMood =
-      Object.entries(moodCounts).length > 0
-        ? Object.entries(moodCounts).reduce((a, b) =>
-            moodCounts[a[0]] > moodCounts[b[0]] ? a : b,
-          )?.[0]
-        : undefined;
-
-    const averageMoodScore = this.calculateMoodScore(logs);
-
+    if (startDate) query = query.gte('meal_time', startDate);
+    if (endDate) query = query.lte('meal_time', endDate);
+    const { data: logs, error } = await query;
+    if (error)
+      throw new BadRequestException('Failed to fetch food log statistics');
     return {
-      totalLogs,
-      moodCounts,
-      mostCommonMood,
-      averageMoodScore,
-      period: {
-        start: startDate,
-        end: endDate,
-      },
+      totalLogs: logs?.length || 0,
+      period: { start: startDate, end: endDate },
     };
   }
 
-  /**
-   * Calculate average mood score (1-10 scale)
-   */
-  private calculateMoodScore(logs: FoodLog[]): number {
-    if (logs.length === 0) return 0;
+  private processMoodData(data: CreateFoodLogRequest | UpdateFoodLogRequest) {
+    const processedData = { ...data };
+    if (!processedData.moods) processedData.moods = [];
+    if (!processedData.mood_scores) processedData.mood_scores = [];
 
-    const moodScores = {
-      energised: 1,
-      happy: 1,
-      satisfied: 1,
-      focused: 1,
-      calm: 1,
-      sluggish: 1,
-      sleepy: 1,
-      anxious: 1,
-      sad: 1,
-      irritable: 1,
-      guilty: 1,
-      craving_more: 1,
-    };
-
-    const totalScore = logs.reduce((sum, log) => {
-      const moodScoreSum = log.moods.reduce((moodSum, mood) => {
-        return moodSum + (moodScores[mood] || 5);
-      }, 0);
-      return sum + moodScoreSum;
-    }, 0);
-
-    const totalMoods = logs.reduce((count, log) => count + log.moods.length, 0);
-
-    return totalMoods > 0 ? Math.round((totalScore / totalMoods) * 10) / 10 : 0;
+    if (data.mood_scores?.length > 0) {
+      processedData.mood_scores = data.mood_scores.slice(0, MAX_MOODS_PER_LOG);
+      processedData.moods = processedData.mood_scores.map(ms => ms.mood);
+    } else if (data.moods?.length > 0) {
+      processedData.mood_scores = data.moods
+        .slice(0, MAX_MOODS_PER_LOG)
+        .map((mood, index) => ({
+          mood: mood as any,
+          score: MAX_MOODS_PER_LOG - index,
+        }));
+    }
+    return processedData;
   }
 }
