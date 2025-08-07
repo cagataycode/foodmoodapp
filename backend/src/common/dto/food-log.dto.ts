@@ -9,7 +9,6 @@ import {
   Min,
   Max,
   IsArray,
-  ArrayNotEmpty,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -66,15 +65,17 @@ export class CreateFoodLogDto {
   @IsString()
   image_base64?: string;
 
-  @ApiProperty({
-    description: 'Mood after eating',
+  @ApiPropertyOptional({
+    description:
+      'Moods associated with this meal (AI will determine intensity)',
     enum: MOOD_LIST,
-    example: 'energised',
+    isArray: true,
+    example: ['happy', 'energised'],
   })
+  @IsOptional()
   @IsArray()
-  @ArrayNotEmpty()
   @IsIn(MOOD_LIST, { each: true })
-  moods: MoodType[];
+  moods?: MoodType[];
 
   @ApiProperty({
     description: 'When the meal was eaten (ISO 8601 format)',
@@ -135,13 +136,14 @@ export class UpdateFoodLogDto {
   image_base64?: string;
 
   @ApiPropertyOptional({
-    description: 'Mood after eating',
+    description:
+      'Moods associated with this meal (AI will determine intensity)',
     enum: MOOD_LIST,
-    example: 'energised',
+    isArray: true,
+    example: ['happy', 'energised'],
   })
   @IsOptional()
   @IsArray()
-  @ArrayNotEmpty()
   @IsIn(MOOD_LIST, { each: true })
   moods?: MoodType[];
 
@@ -198,7 +200,6 @@ export class FoodLogFiltersDto {
   })
   @IsOptional()
   @IsArray()
-  @ArrayNotEmpty()
   @IsIn(MOOD_LIST, { each: true })
   moods?: MoodType[];
 
@@ -237,11 +238,12 @@ export class FoodLogResponseDto {
   @ApiProperty() id: string;
   @ApiProperty() user_id: string;
   @ApiProperty() food_name: string;
+  @ApiProperty({ enum: MEAL_TYPE_LIST }) meal_type: MealType;
   @ApiProperty({ isArray: true }) moods: MoodType[];
   @ApiProperty() meal_time: string;
   @ApiProperty({ required: false }) portion_size?: string;
   @ApiProperty({ required: false }) notes?: string;
+  @ApiProperty({ required: false }) image_base64?: string;
   @ApiProperty() created_at: string;
   @ApiProperty() updated_at: string;
-  @ApiProperty({ required: false }) image_base64?: string;
 }

@@ -14,15 +14,18 @@ export type MoodType =
   | 'guilty'
   | 'craving_more';
 
+export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
+
 export interface FoodLog {
   id: string;
   user_id: string;
   food_name: string;
-  food_id?: string; // Open Food Facts ID for future integration
-  moods: MoodType[];
+  meal_type: MealType;
+  moods: MoodType[]; // Moods associated with this meal (AI will determine intensity)
   meal_time: string;
   portion_size?: string;
   notes?: string;
+  image_base64?: string; // Base64-encoded image
   created_at: string;
   updated_at: string;
 }
@@ -30,19 +33,23 @@ export interface FoodLog {
 export interface CreateFoodLogRequest {
   food_name: string;
   food_id?: string;
-  moods: MoodType[];
+  meal_type: MealType;
+  moods?: MoodType[]; // Moods associated with this meal (AI will determine intensity)
   meal_time: string;
   portion_size?: string;
   notes?: string;
+  image_base64?: string; // Base64-encoded image
 }
 
 export interface UpdateFoodLogRequest {
   food_name?: string;
   food_id?: string;
-  moods?: MoodType[];
+  meal_type?: MealType;
+  moods?: MoodType[]; // Moods associated with this meal (AI will determine intensity)
   meal_time?: string;
   portion_size?: string;
   notes?: string;
+  image_base64?: string; // Base64-encoded image
 }
 
 export interface FoodLogFilters {

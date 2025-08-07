@@ -19,37 +19,66 @@ const MOODS = [
 const MoodPalette = ({ selectedMoods = [], onSelect }) => {
   const toggleMood = (key) => {
     if (selectedMoods.includes(key)) {
+      // Remove the mood
       onSelect(selectedMoods.filter((m) => m !== key));
     } else {
-      onSelect([...selectedMoods, key]);
+      // Add the mood (up to 4)
+      if (selectedMoods.length < 4) {
+        onSelect([...selectedMoods, key]);
+      }
     }
+  };
+
+  const getMoodOrder = (moodKey) => {
+    const index = selectedMoods.indexOf(moodKey);
+    return index >= 0 ? index + 1 : null;
+  };
+
+  const getOrderColor = (order) => {
+    const colors = ["#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4"];
+    return colors[order - 1] || "#FF6B6B";
   };
 
   return (
     <View style={styles.paletteContainer}>
-      {MOODS.map((mood) => (
-        <TouchableOpacity
-          key={mood.key}
-          style={[
-            styles.moodButton,
-            {
-              backgroundColor: mood.color,
-              borderColor: selectedMoods.includes(mood.key)
-                ? "#3498db"
-                : "transparent",
-              opacity:
-                selectedMoods.length > 0 && !selectedMoods.includes(mood.key)
-                  ? 0.5
-                  : 1,
-            },
-          ]}
-          onPress={() => toggleMood(mood.key)}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.emoji}>{mood.emoji}</Text>
-          <Text style={styles.label}>{mood.label}</Text>
-        </TouchableOpacity>
-      ))}
+      <Text style={styles.instructionText}>
+        Select up to 4 moods (first = highest priority)
+      </Text>
+      {MOODS.map((mood) => {
+        const isSelected = selectedMoods.includes(mood.key);
+        const order = getMoodOrder(mood.key);
+
+        return (
+          <TouchableOpacity
+            key={mood.key}
+            style={[
+              styles.moodButton,
+              {
+                backgroundColor: mood.color,
+                borderColor: isSelected ? getOrderColor(order) : "transparent",
+                borderWidth: isSelected ? 3 : 2,
+                opacity: selectedMoods.length >= 4 && !isSelected ? 0.5 : 1,
+              },
+            ]}
+            onPress={() => toggleMood(mood.key)}
+            activeOpacity={0.8}
+            disabled={selectedMoods.length >= 4 && !isSelected}
+          >
+            <Text style={styles.emoji}>{mood.emoji}</Text>
+            <Text style={styles.label}>{mood.label}</Text>
+            {isSelected && order && (
+              <View
+                style={[
+                  styles.orderBadge,
+                  { backgroundColor: getOrderColor(order) },
+                ]}
+              >
+                <Text style={styles.orderText}>{order}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        );
+      })}
     </View>
   );
 };
@@ -61,6 +90,13 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginVertical: 10,
   },
+  instructionText: {
+    fontSize: 12,
+    color: "#666",
+    textAlign: "center",
+    marginBottom: 8,
+    fontStyle: "italic",
+  },
   moodButton: {
     width: "30%",
     aspectRatio: 1.7,
@@ -68,7 +104,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 2,
+    position: "relative",
   },
   emoji: {
     fontSize: 22,
@@ -78,6 +114,23 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: "#2c3e50",
     fontWeight: "600",
+  },
+  orderBadge: {
+    position: "absolute",
+    top: -8,
+    right: -8,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+    borderColor: "#fff",
+  },
+  orderText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "bold",
   },
 });
 

@@ -20,5 +20,31 @@ export function getMoodColors(moods) {
   return moods.map((m) => MOOD_COLORS[m] || "#fff");
 }
 
+// Helper to get mood colors from mood scores (prioritized by score)
+export function getMoodColorsFromScores(moodScores) {
+  if (!Array.isArray(moodScores)) return [];
+
+  // Sort by score (highest first) and get colors
+  return moodScores
+    .sort((a, b) => b.score - a.score)
+    .map((ms) => MOOD_COLORS[ms.mood] || "#fff");
+}
+
+// Helper to get mood colors with fallback to legacy moods
+export function getMoodColorsWithFallback(log) {
+  if (log.mood_scores && log.mood_scores.length > 0) {
+    return getMoodColorsFromScores(log.mood_scores);
+  }
+
+  // Fallback to legacy moods array
+  const moods = log.moods || (log.mood ? [log.mood] : []);
+  return getMoodColors(moods);
+}
+
 // Default export for Expo Router compatibility
-export default { MOOD_COLORS, getMoodColors };
+export default {
+  MOOD_COLORS,
+  getMoodColors,
+  getMoodColorsFromScores,
+  getMoodColorsWithFallback,
+};
