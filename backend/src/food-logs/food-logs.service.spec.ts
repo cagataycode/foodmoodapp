@@ -52,8 +52,7 @@ describe('FoodLogsService', () => {
       user_id: 'user-1',
       food_name: 'Pizza',
       meal_type: 'lunch',
-      moods: ['happy'],
-      mood_scores: [{ mood: 'happy', score: 4 }],
+      moods: ['happy', 'energised'],
       meal_time: '2025-08-07T12:00:00Z',
       created_at: '2025-08-07T12:00:00Z',
       updated_at: '2025-08-07T12:00:00Z',
@@ -62,7 +61,7 @@ describe('FoodLogsService', () => {
     const createRequest: CreateFoodLogRequest = {
       food_name: 'Pizza',
       meal_type: 'lunch',
-      mood_scores: [{ mood: 'happy', score: 4 }],
+      moods: ['happy', 'energised'],
       meal_time: '2025-08-07T12:00:00Z',
     };
 
@@ -79,7 +78,6 @@ describe('FoodLogsService', () => {
       expect(mockQuery.insert).toHaveBeenCalledWith({
         user_id: 'user-1',
         ...createRequest,
-        moods: ['happy'],
       });
       expect(result).toEqual(mockFoodLog);
     });
@@ -183,16 +181,12 @@ describe('FoodLogsService', () => {
 
       const updateRequest: UpdateFoodLogRequest = {
         food_name: 'Updated Pizza',
-        mood_scores: [{ mood: 'happy', score: 4 }],
+        moods: ['happy', 'satisfied'],
       };
 
       const result = await service.updateFoodLog('user-1', '1', updateRequest);
 
-      expect(mockUpdateQuery.update).toHaveBeenCalledWith({
-        food_name: 'Updated Pizza',
-        moods: ['happy'],
-        mood_scores: [{ mood: 'happy', score: 4 }],
-      });
+      expect(mockUpdateQuery.update).toHaveBeenCalledWith(updateRequest);
       expect(result).toEqual(mockFoodLog);
     });
 
@@ -253,85 +247,6 @@ describe('FoodLogsService', () => {
           end: '2025-08-07T23:59:59Z',
         },
       });
-    });
-  });
-
-  describe('Mood Processing', () => {
-    it('should limit mood scores to maximum of 4', () => {
-      const inputData: CreateFoodLogRequest = {
-        food_name: 'Pizza',
-        meal_time: '2025-08-07T12:00:00Z',
-        meal_type: 'lunch',
-        mood_scores: [
-          { mood: 'happy', score: 4 },
-          { mood: 'energised', score: 3 },
-          { mood: 'focused', score: 2 },
-          { mood: 'calm', score: 1 },
-          { mood: 'sleepy', score: 1 }, // Should be ignored (max 4)
-        ],
-      };
-
-      const processedData = (service as any).processMoodData(inputData);
-
-      expect(processedData.mood_scores).toHaveLength(4);
-      expect(processedData.moods).toEqual([
-        'happy',
-        'energised',
-        'focused',
-        'calm',
-      ]);
-    });
-
-    it('should convert legacy moods array to mood scores', () => {
-      const inputData: CreateFoodLogRequest = {
-        food_name: 'Burger',
-        meal_time: '2025-08-07T12:00:00Z',
-        meal_type: 'dinner',
-        moods: ['sleepy', 'satisfied', 'happy'],
-      };
-
-      const processedData = (service as any).processMoodData(inputData);
-
-      expect(processedData.mood_scores).toEqual([
-        { mood: 'sleepy', score: 4 },
-        { mood: 'satisfied', score: 3 },
-        { mood: 'happy', score: 2 },
-      ]);
-      expect(processedData.moods).toEqual(['sleepy', 'satisfied', 'happy']);
-    });
-
-    it('should prioritize mood_scores over moods array', () => {
-      const inputData: CreateFoodLogRequest = {
-        food_name: 'Pasta',
-        meal_time: '2025-08-07T12:00:00Z',
-        meal_type: 'dinner',
-        moods: ['sleepy', 'satisfied'],
-        mood_scores: [
-          { mood: 'happy', score: 4 },
-          { mood: 'energised', score: 3 },
-        ],
-      };
-
-      const processedData = (service as any).processMoodData(inputData);
-
-      expect(processedData.mood_scores).toEqual([
-        { mood: 'happy', score: 4 },
-        { mood: 'energised', score: 3 },
-      ]);
-      expect(processedData.moods).toEqual(['happy', 'energised']);
-    });
-
-    it('should handle empty moods', () => {
-      const inputData: CreateFoodLogRequest = {
-        food_name: 'Water',
-        meal_time: '2025-08-07T12:00:00Z',
-        meal_type: 'snack',
-      };
-
-      const processedData = (service as any).processMoodData(inputData);
-
-      expect(processedData.moods).toEqual([]);
-      expect(processedData.mood_scores).toEqual([]);
     });
   });
 });
