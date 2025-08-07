@@ -11,10 +11,7 @@ import {
   UpdateFoodLogRequest,
   FoodLogFilters,
   Database,
-  MoodScore,
 } from '../types';
-
-const MAX_MOODS_PER_LOG = 4;
 
 @Injectable()
 export class FoodLogsService {
@@ -34,10 +31,9 @@ export class FoodLogsService {
     userId: string,
     foodLogData: CreateFoodLogRequest,
   ): Promise<FoodLog> {
-    const processedData = this.processMoodData(foodLogData);
     const { data: foodLog, error } = await this.supabase
       .from('food_logs')
-      .insert({ user_id: userId, ...processedData })
+      .insert({ user_id: userId, ...foodLogData })
       .select()
       .single();
     if (error || !foodLog)
@@ -89,10 +85,9 @@ export class FoodLogsService {
     updateData: UpdateFoodLogRequest,
   ): Promise<FoodLog> {
     await this.getFoodLogById(userId, foodLogId);
-    const processedData = this.processMoodData(updateData);
     const { data: foodLog, error } = await this.supabase
       .from('food_logs')
-      .update(processedData)
+      .update(updateData)
       .eq('id', foodLogId)
       .eq('user_id', userId)
       .select()
@@ -126,24 +121,5 @@ export class FoodLogsService {
       totalLogs: logs?.length || 0,
       period: { start: startDate, end: endDate },
     };
-  }
-
-  private processMoodData(data: CreateFoodLogRequest | UpdateFoodLogRequest) {
-    const processedData = { ...data };
-    if (!processedData.moods) processedData.moods = [];
-    if (!processedData.mood_scores) processedData.mood_scores = [];
-
-    if (data.mood_scores?.length > 0) {
-      processedData.mood_scores = data.mood_scores.slice(0, MAX_MOODS_PER_LOG);
-      processedData.moods = processedData.mood_scores.map(ms => ms.mood);
-    } else if (data.moods?.length > 0) {
-      processedData.mood_scores = data.moods
-        .slice(0, MAX_MOODS_PER_LOG)
-        .map((mood, index) => ({
-          mood: mood as any,
-          score: MAX_MOODS_PER_LOG - index,
-        }));
-    }
-    return processedData;
   }
 }
