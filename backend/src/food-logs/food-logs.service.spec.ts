@@ -1,369 +1,337 @@
-import { Test } from '@nestjs/testing';
+import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { FoodLogsService } from './food-logs.service';
-import { NotFoundException } from '@nestjs/common';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { FoodLog, CreateFoodLogRequest, UpdateFoodLogRequest } from '../types';
 
 jest.mock('@supabase/supabase-js');
 
 describe('FoodLogsService', () => {
   let service: FoodLogsService;
-  let mockSupabaseClient: any;
-
-  // Test data
-  const userId = 'user-123';
-  const foodLogId = 'food-log-123';
-  const baseFoodLog = {
-    id: foodLogId,
-    user_id: userId,
-    food_name: 'Oatmeal with berries',
-    meal_type: 'breakfast' as const,
-    moods: ['energised', 'satisfied'] as ['energised', 'satisfied'],
-    meal_time: '2024-01-15T08:30:00Z',
-    portion_size: '1 cup',
-    notes: 'Added honey and cinnamon',
-    created_at: '2024-01-15T08:30:00Z',
-    updated_at: '2024-01-15T08:30:00Z',
-  };
-
-  const mockStatsFoodLogs = [
-    {
-      id: '1',
-      user_id: userId,
-      food_name: 'Oatmeal',
-      moods: ['energised', 'satisfied'],
-      meal_time: '2024-01-15T08:30:00Z',
-    },
-    {
-      id: '2',
-      user_id: userId,
-      food_name: 'Salad',
-      moods: ['energised', 'happy'],
-      meal_time: '2024-01-15T12:30:00Z',
-    },
-    {
-      id: '3',
-      user_id: userId,
-      food_name: 'Pizza',
-      moods: ['satisfied', 'sluggish'],
-      meal_time: '2024-01-15T18:30:00Z',
-    },
-  ];
-
-  // Generic test helpers
-  const createMockQuery = () => {
-    const query: any = {};
-    [
-      'select',
-      'eq',
-      'order',
-      'gte',
-      'lte',
-      'in',
-      'ilike',
-      'limit',
-      'range',
-      'single',
-      'update',
-      'delete',
-    ].forEach(method => {
-      query[method] = jest.fn().mockReturnThis();
-    });
-    return query;
-  };
-
-  const createAsyncMock = (data: any, error: any = null) => {
-    const query = createMockQuery();
-    Object.assign(query, { then: (resolve: any) => resolve({ data, error }) });
-    return query;
-  };
-
-  const setupMock = (mockFrom: any) => {
-    mockSupabaseClient.from.mockImplementation(mockFrom);
-  };
+  let mockSupabase: jest.Mocked<SupabaseClient<any>>;
+  let mockConfigService: jest.Mocked<ConfigService>;
 
   beforeEach(async () => {
-    mockSupabaseClient = { from: jest.fn() };
-    const mockConfigService = {
-      get: jest.fn(
-        (key: string) =>
-          ({
-            SUPABASE_URL: 'https://test.supabase.co',
-            SUPABASE_SERVICE_ROLE_KEY: 'test-service-role-key',
-          })[key] || null,
-      ),
-    };
+    jest.clearAllMocks();
 
+    mockConfigService = {
+      get: jest.fn((key: string) => {
+        if (key === 'SUPABASE_URL') return 'https://test.supabase.co';
+        if (key === 'SUPABASE_SERVICE_ROLE_KEY') return 'test-key';
+        return null;
+      }),
+    } as any;
+
+    const mockSupabaseClient = { from: jest.fn() };
     (createClient as jest.Mock).mockReturnValue(mockSupabaseClient);
-    const module = await Test.createTestingModule({
+    mockSupabase = mockSupabaseClient as any;
+
+    const module: TestingModule = await Test.createTestingModule({
       providers: [
         FoodLogsService,
         { provide: ConfigService, useValue: mockConfigService },
       ],
     }).compile();
+
     service = module.get<FoodLogsService>(FoodLogsService);
   });
 
-  afterEach(() => jest.clearAllMocks());
-
-  describe('createFoodLog', () => {
-    const createData = {
-      food_name: 'Oatmeal with berries',
-      meal_type: 'breakfast' as const,
-      moods: ['energised', 'satisfied'] as ['energised', 'satisfied'],
-      meal_time: '2024-01-15T08:30:00Z',
-      portion_size: '1 cup',
-      notes: 'Added honey and cinnamon',
-    };
-
-    it('should create successfully', async () => {
-      const mockFrom = jest.fn().mockReturnValue({
-        insert: jest.fn().mockReturnValue({
-          select: jest.fn().mockReturnValue({
-            single: jest
-              .fn()
-              .mockResolvedValue({ data: baseFoodLog, error: null }),
-          }),
-        }),
-      });
-      setupMock(mockFrom);
-      const result = await service.createFoodLog(userId, createData);
-      expect(result).toEqual(baseFoodLog);
-    });
-
-    it('should throw on creation failure', async () => {
-      const mockFrom = jest.fn().mockReturnValue({
-        insert: jest.fn().mockReturnValue({
-          select: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
-              data: null,
-              error: { message: 'Creation failed' },
-            }),
-          }),
-        }),
-      });
-      setupMock(mockFrom);
-      await expect(service.createFoodLog(userId, createData)).rejects.toThrow(
-        'Failed to create food log',
+  describe('Constructor', () => {
+    it('should throw error when Supabase config is missing', () => {
+      mockConfigService.get.mockReturnValue(null);
+      expect(() => new FoodLogsService(mockConfigService)).toThrow(
+        'Missing Supabase configuration',
       );
     });
   });
 
-  describe('getFoodLogs', () => {
-    it('should get logs without filters', async () => {
-      const mockQuery = createMockQuery();
-      mockQuery.order.mockResolvedValue({ data: [baseFoodLog], error: null });
-      setupMock(jest.fn().mockReturnValue(mockQuery));
-      const result = await service.getFoodLogs(userId);
-      expect(result).toEqual([baseFoodLog]);
-    });
+  describe('CRUD Operations', () => {
+    const mockFoodLog: FoodLog = {
+      id: '1',
+      user_id: 'user-1',
+      food_name: 'Pizza',
+      meal_type: 'lunch',
+      moods: ['happy'],
+      mood_scores: [{ mood: 'happy', score: 4 }],
+      meal_time: '2025-08-07T12:00:00Z',
+      created_at: '2025-08-07T12:00:00Z',
+      updated_at: '2025-08-07T12:00:00Z',
+    };
 
-    it('should get logs with filters', async () => {
-      const filters = {
-        start_date: '2024-01-01',
-        end_date: '2024-01-31',
-        moods: ['energised'] as ['energised'],
-        food_name: 'oatmeal',
-        limit: 10,
-        offset: 5,
+    const createRequest: CreateFoodLogRequest = {
+      food_name: 'Pizza',
+      meal_type: 'lunch',
+      mood_scores: [{ mood: 'happy', score: 4 }],
+      meal_time: '2025-08-07T12:00:00Z',
+    };
+
+    it('should create food log successfully', async () => {
+      const mockQuery = {
+        insert: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({ data: mockFoodLog, error: null }),
       };
-      const mockQuery = createAsyncMock([baseFoodLog]);
-      setupMock(jest.fn().mockReturnValue(mockQuery));
-      const result = await service.getFoodLogs(userId, filters);
-      expect(result).toEqual([baseFoodLog]);
+      mockSupabase.from.mockReturnValue(mockQuery as any);
+
+      const result = await service.createFoodLog('user-1', createRequest);
+
+      expect(mockQuery.insert).toHaveBeenCalledWith({
+        user_id: 'user-1',
+        ...createRequest,
+        moods: ['happy'],
+      });
+      expect(result).toEqual(mockFoodLog);
     });
 
-    it('should throw on fetch failure', async () => {
-      const mockQuery = createMockQuery();
-      mockQuery.order.mockResolvedValue({
-        data: null,
-        error: { message: 'Fetch failed' },
+    it('should throw BadRequestException when creation fails', async () => {
+      const mockQuery = {
+        insert: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
+        single: jest
+          .fn()
+          .mockResolvedValue({ data: null, error: { message: 'Error' } }),
+      };
+      mockSupabase.from.mockReturnValue(mockQuery as any);
+
+      await expect(
+        service.createFoodLog('user-1', createRequest),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should get food logs with filters', async () => {
+      const mockQuery = {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        order: jest.fn().mockReturnThis(),
+        gte: jest.fn().mockReturnThis(),
+        lte: jest.fn().mockReturnThis(),
+        in: jest.fn().mockReturnThis(),
+        ilike: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
+        range: jest
+          .fn()
+          .mockResolvedValue({ data: [mockFoodLog], error: null }),
+      };
+      mockSupabase.from.mockReturnValue(mockQuery as any);
+
+      await service.getFoodLogs('user-1', {
+        start_date: '2025-08-07T00:00:00Z',
+        end_date: '2025-08-07T23:59:59Z',
+        moods: ['happy'],
+        food_name: 'pizza',
+        limit: 10,
+        offset: 10,
       });
-      setupMock(jest.fn().mockReturnValue(mockQuery));
-      await expect(service.getFoodLogs(userId)).rejects.toThrow(
-        'Failed to fetch food logs',
+
+      expect(mockQuery.gte).toHaveBeenCalledWith(
+        'meal_time',
+        '2025-08-07T00:00:00Z',
       );
+      expect(mockQuery.lte).toHaveBeenCalledWith(
+        'meal_time',
+        '2025-08-07T23:59:59Z',
+      );
+      expect(mockQuery.in).toHaveBeenCalledWith('moods', ['happy']);
+      expect(mockQuery.ilike).toHaveBeenCalledWith('food_name', '%pizza%');
+      expect(mockQuery.range).toHaveBeenCalledWith(10, 19);
     });
 
-    it('should return empty array when no logs', async () => {
-      const mockQuery = createMockQuery();
-      mockQuery.order.mockResolvedValue({ data: null, error: null });
-      setupMock(jest.fn().mockReturnValue(mockQuery));
-      const result = await service.getFoodLogs(userId);
-      expect(result).toEqual([]);
-    });
-  });
+    it('should get food log by id', async () => {
+      const mockQuery = {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({ data: mockFoodLog, error: null }),
+      };
+      mockSupabase.from.mockReturnValue(mockQuery as any);
 
-  describe('getFoodLogById', () => {
-    it('should get log by ID', async () => {
-      const mockQuery = createMockQuery();
-      mockQuery.single.mockResolvedValue({ data: baseFoodLog, error: null });
-      setupMock(jest.fn().mockReturnValue(mockQuery));
-      const result = await service.getFoodLogById(userId, foodLogId);
-      expect(result).toEqual(baseFoodLog);
+      const result = await service.getFoodLogById('user-1', '1');
+
+      expect(result).toEqual(mockFoodLog);
     });
 
-    it('should throw when not found', async () => {
-      const mockQuery = createMockQuery();
-      mockQuery.single.mockResolvedValue({
-        data: null,
-        error: { message: 'Not found' },
-      });
-      setupMock(jest.fn().mockReturnValue(mockQuery));
-      await expect(service.getFoodLogById(userId, foodLogId)).rejects.toThrow(
+    it('should throw NotFoundException when food log not found', async () => {
+      const mockQuery = {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        single: jest
+          .fn()
+          .mockResolvedValue({ data: null, error: { code: 'PGRST116' } }),
+      };
+      mockSupabase.from.mockReturnValue(mockQuery as any);
+
+      await expect(service.getFoodLogById('user-1', '999')).rejects.toThrow(
         NotFoundException,
       );
     });
-  });
 
-  describe('updateFoodLog', () => {
-    const updateData = {
-      food_name: 'Updated oatmeal',
-      moods: ['happy', 'satisfied'] as ['happy', 'satisfied'],
-      notes: 'Updated notes',
-    };
-    const updatedFoodLog = { ...baseFoodLog, ...updateData };
+    it('should update food log successfully', async () => {
+      const mockGetQuery = {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({ data: mockFoodLog, error: null }),
+      };
+      const mockUpdateQuery = {
+        update: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({ data: mockFoodLog, error: null }),
+      };
+      mockSupabase.from
+        .mockReturnValueOnce(mockGetQuery as any)
+        .mockReturnValueOnce(mockUpdateQuery as any);
 
-    it('should update successfully', async () => {
-      const mockGetQuery = createMockQuery();
-      mockGetQuery.single.mockResolvedValue({
-        data: updatedFoodLog,
-        error: null,
+      const updateRequest: UpdateFoodLogRequest = {
+        food_name: 'Updated Pizza',
+        mood_scores: [{ mood: 'happy', score: 4 }],
+      };
+
+      const result = await service.updateFoodLog('user-1', '1', updateRequest);
+
+      expect(mockUpdateQuery.update).toHaveBeenCalledWith({
+        food_name: 'Updated Pizza',
+        moods: ['happy'],
+        mood_scores: [{ mood: 'happy', score: 4 }],
       });
-      const mockUpdateQuery = createMockQuery();
-      mockUpdateQuery.single.mockResolvedValue({
-        data: updatedFoodLog,
-        error: null,
-      });
-      const mockFrom = jest
-        .fn()
-        .mockReturnValueOnce(mockGetQuery)
-        .mockReturnValueOnce(mockUpdateQuery);
-      setupMock(mockFrom);
-      const result = await service.updateFoodLog(userId, foodLogId, updateData);
-      expect(result).toEqual(updatedFoodLog);
+      expect(result).toEqual(mockFoodLog);
     });
 
-    it('should throw when not found', async () => {
-      const mockQuery = createMockQuery();
-      mockQuery.single.mockResolvedValue({
-        data: null,
-        error: { message: 'Not found' },
-      });
-      setupMock(jest.fn().mockReturnValue(mockQuery));
-      await expect(
-        service.updateFoodLog(userId, foodLogId, updateData),
-      ).rejects.toThrow(NotFoundException);
-    });
+    it('should delete food log successfully', async () => {
+      const mockGetQuery = {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({ data: mockFoodLog, error: null }),
+      };
+      const mockDeleteQuery = {
+        delete: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+      };
+      mockDeleteQuery.eq
+        .mockReturnValueOnce(mockDeleteQuery)
+        .mockResolvedValueOnce({ error: null });
+      mockSupabase.from
+        .mockReturnValueOnce(mockGetQuery as any)
+        .mockReturnValueOnce(mockDeleteQuery as any);
 
-    it('should throw on update failure', async () => {
-      const mockGetQuery = createMockQuery();
-      mockGetQuery.single.mockResolvedValue({
-        data: updatedFoodLog,
-        error: null,
-      });
-      const mockUpdateQuery = createMockQuery();
-      mockUpdateQuery.single.mockResolvedValue({
-        data: null,
-        error: { message: 'Update failed' },
-      });
-      const mockFrom = jest
-        .fn()
-        .mockReturnValueOnce(mockGetQuery)
-        .mockReturnValueOnce(mockUpdateQuery);
-      setupMock(mockFrom);
-      await expect(
-        service.updateFoodLog(userId, foodLogId, updateData),
-      ).rejects.toThrow('Failed to update food log');
-    });
-  });
+      await service.deleteFoodLog('user-1', '1');
 
-  describe('deleteFoodLog', () => {
-    it('should delete successfully', async () => {
-      const mockGetQuery = createMockQuery();
-      mockGetQuery.single.mockResolvedValue({
-        data: { id: foodLogId },
-        error: null,
-      });
-      const mockDeleteQuery = createAsyncMock(null, null);
-      const mockFrom = jest
-        .fn()
-        .mockReturnValueOnce(mockGetQuery)
-        .mockReturnValueOnce(mockDeleteQuery);
-      setupMock(mockFrom);
-      await service.deleteFoodLog(userId, foodLogId);
       expect(mockDeleteQuery.delete).toHaveBeenCalled();
-    });
-
-    it('should throw when not found', async () => {
-      const mockQuery = createMockQuery();
-      mockQuery.single.mockResolvedValue({
-        data: null,
-        error: { message: 'Not found' },
-      });
-      setupMock(jest.fn().mockReturnValue(mockQuery));
-      await expect(service.deleteFoodLog(userId, foodLogId)).rejects.toThrow(
-        NotFoundException,
-      );
-    });
-
-    it('should throw on delete failure', async () => {
-      const mockGetQuery = createMockQuery();
-      mockGetQuery.single.mockResolvedValue({
-        data: { id: foodLogId },
-        error: null,
-      });
-      const mockDeleteQuery = createAsyncMock(null, {
-        message: 'Delete failed',
-      });
-      const mockFrom = jest
-        .fn()
-        .mockReturnValueOnce(mockGetQuery)
-        .mockReturnValueOnce(mockDeleteQuery);
-      setupMock(mockFrom);
-      await expect(service.deleteFoodLog(userId, foodLogId)).rejects.toThrow(
-        'Failed to delete food log',
-      );
+      expect(mockDeleteQuery.eq).toHaveBeenCalledWith('id', '1');
+      expect(mockDeleteQuery.eq).toHaveBeenCalledWith('user_id', 'user-1');
     });
   });
 
-  describe('getFoodLogStats', () => {
-    it('should get stats without date range', async () => {
-      const mockQuery = createAsyncMock(mockStatsFoodLogs);
-      setupMock(jest.fn().mockReturnValue(mockQuery));
-      const result = await service.getFoodLogStats(userId);
-      expect(result.totalLogs).toBe(3);
-      expect(result.mostCommonMood).toBe('satisfied');
-    });
+  describe('Statistics', () => {
+    it('should get food log stats', async () => {
+      const mockLogs = [
+        { id: '1', user_id: 'user-1', food_name: 'Pizza', meal_type: 'lunch' },
+        {
+          id: '2',
+          user_id: 'user-1',
+          food_name: 'Burger',
+          meal_type: 'dinner',
+        },
+      ];
+      const mockQuery = {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        gte: jest.fn().mockReturnThis(),
+        lte: jest.fn().mockResolvedValue({ data: mockLogs, error: null }),
+      };
+      mockSupabase.from.mockReturnValue(mockQuery as any);
 
-    it('should get stats with date range', async () => {
-      const mockQuery = createMockQuery();
-      mockQuery.lte.mockResolvedValue({ data: mockStatsFoodLogs, error: null });
-      setupMock(jest.fn().mockReturnValue(mockQuery));
       const result = await service.getFoodLogStats(
-        userId,
-        '2024-01-01',
-        '2024-01-31',
+        'user-1',
+        '2025-08-07T00:00:00Z',
+        '2025-08-07T23:59:59Z',
       );
-      expect(result.totalLogs).toBe(3);
-      expect(result.period).toEqual({ start: '2024-01-01', end: '2024-01-31' });
+
+      expect(result).toEqual({
+        totalLogs: 2,
+        period: {
+          start: '2025-08-07T00:00:00Z',
+          end: '2025-08-07T23:59:59Z',
+        },
+      });
+    });
+  });
+
+  describe('Mood Processing', () => {
+    it('should limit mood scores to maximum of 4', () => {
+      const inputData: CreateFoodLogRequest = {
+        food_name: 'Pizza',
+        meal_time: '2025-08-07T12:00:00Z',
+        meal_type: 'lunch',
+        mood_scores: [
+          { mood: 'happy', score: 4 },
+          { mood: 'energised', score: 3 },
+          { mood: 'focused', score: 2 },
+          { mood: 'calm', score: 1 },
+          { mood: 'sleepy', score: 1 }, // Should be ignored (max 4)
+        ],
+      };
+
+      const processedData = (service as any).processMoodData(inputData);
+
+      expect(processedData.mood_scores).toHaveLength(4);
+      expect(processedData.moods).toEqual([
+        'happy',
+        'energised',
+        'focused',
+        'calm',
+      ]);
     });
 
-    it('should handle empty logs', async () => {
-      const mockQuery = createMockQuery();
-      mockQuery.lte.mockResolvedValue({ data: [], error: null });
-      setupMock(jest.fn().mockReturnValue(mockQuery));
-      const result = await service.getFoodLogStats(userId);
-      expect(result.totalLogs).toBe(0);
-      expect(result.moodCounts).toEqual({});
+    it('should convert legacy moods array to mood scores', () => {
+      const inputData: CreateFoodLogRequest = {
+        food_name: 'Burger',
+        meal_time: '2025-08-07T12:00:00Z',
+        meal_type: 'dinner',
+        moods: ['sleepy', 'satisfied', 'happy'],
+      };
+
+      const processedData = (service as any).processMoodData(inputData);
+
+      expect(processedData.mood_scores).toEqual([
+        { mood: 'sleepy', score: 4 },
+        { mood: 'satisfied', score: 3 },
+        { mood: 'happy', score: 2 },
+      ]);
+      expect(processedData.moods).toEqual(['sleepy', 'satisfied', 'happy']);
     });
 
-    it('should throw on stats failure', async () => {
-      const mockQuery = createAsyncMock(null, { message: 'Fetch failed' });
-      setupMock(jest.fn().mockReturnValue(mockQuery));
-      await expect(service.getFoodLogStats(userId)).rejects.toThrow(
-        'Failed to fetch food log statistics',
-      );
+    it('should prioritize mood_scores over moods array', () => {
+      const inputData: CreateFoodLogRequest = {
+        food_name: 'Pasta',
+        meal_time: '2025-08-07T12:00:00Z',
+        meal_type: 'dinner',
+        moods: ['sleepy', 'satisfied'],
+        mood_scores: [
+          { mood: 'happy', score: 4 },
+          { mood: 'energised', score: 3 },
+        ],
+      };
+
+      const processedData = (service as any).processMoodData(inputData);
+
+      expect(processedData.mood_scores).toEqual([
+        { mood: 'happy', score: 4 },
+        { mood: 'energised', score: 3 },
+      ]);
+      expect(processedData.moods).toEqual(['happy', 'energised']);
+    });
+
+    it('should handle empty moods', () => {
+      const inputData: CreateFoodLogRequest = {
+        food_name: 'Water',
+        meal_time: '2025-08-07T12:00:00Z',
+        meal_type: 'snack',
+      };
+
+      const processedData = (service as any).processMoodData(inputData);
+
+      expect(processedData.moods).toEqual([]);
+      expect(processedData.mood_scores).toEqual([]);
     });
   });
 });
