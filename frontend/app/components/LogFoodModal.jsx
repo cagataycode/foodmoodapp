@@ -31,9 +31,21 @@ const LogFoodModal = ({ visible, onClose, onSave, initialLog }) => {
     if (initialLog) {
       setFood(initialLog.food || "");
       setImage(initialLog.image || null);
-      setSelectedMoods(
-        initialLog.moods || (initialLog.mood ? [initialLog.mood] : [])
-      );
+
+      // Handle mood scores if available, otherwise fall back to legacy moods
+      if (initialLog.mood_scores && initialLog.mood_scores.length > 0) {
+        // Extract moods from mood_scores in order of selection (highest score first)
+        const moodsFromScores = initialLog.mood_scores
+          .sort((a, b) => b.score - a.score)
+          .map((ms) => ms.mood);
+        setSelectedMoods(moodsFromScores);
+      } else {
+        // Fallback to legacy moods array
+        setSelectedMoods(
+          initialLog.moods || (initialLog.mood ? [initialLog.mood] : [])
+        );
+      }
+
       setTime(initialLog.time || "");
       setPortion(initialLog.portion || "");
       setNotes(initialLog.notes || "");

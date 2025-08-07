@@ -1,12 +1,12 @@
 import React from "react";
 import { View, Text, TouchableOpacity, Image, StyleSheet } from "react-native";
 import EditIcon from "../../assets/icons/edit-icon.svg";
-import { getMoodColors } from "../constants/moodColors";
+import { getMoodColorsWithFallback } from "../constants/moodColors";
 import { formatTime } from "../utils/dateUtils";
 import Card from "./card/Card";
 
 const LogCard = ({ log, onEdit }) => {
-  const moodColors = getMoodColors(log.moods || (log.mood ? [log.mood] : []));
+  const moodColors = getMoodColorsWithFallback(log);
 
   return (
     <Card style={styles.logCardContainer}>
