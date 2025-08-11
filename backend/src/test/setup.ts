@@ -1,26 +1,18 @@
-import dotenv from "dotenv";
-
-// Load test environment variables
-dotenv.config({ path: ".env.test" });
+// Load environment variables from .env file
+require('dotenv').config({ path: '.env' });
 
 // Set test environment
-process.env.NODE_ENV = "test";
+process.env.NODE_ENV = 'test';
 
 // Mock console methods to reduce noise in tests
-const originalConsoleLog = console.log;
-const originalConsoleError = console.error;
-const originalConsoleWarn = console.warn;
-
 beforeAll(() => {
-  console.log = jest.fn();
-  console.error = jest.fn();
-  console.warn = jest.fn();
+  jest.spyOn(console, 'log').mockImplementation(() => {});
+  jest.spyOn(console, 'error').mockImplementation(() => {});
+  jest.spyOn(console, 'warn').mockImplementation(() => {});
 });
 
 afterAll(() => {
-  console.log = originalConsoleLog;
-  console.error = originalConsoleError;
-  console.warn = originalConsoleWarn;
+  jest.restoreAllMocks();
 });
 
 // Global test timeout
