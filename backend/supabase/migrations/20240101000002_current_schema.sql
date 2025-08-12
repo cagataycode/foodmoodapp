@@ -11,6 +11,8 @@ CREATE TABLE public.food_logs (
     meal_time TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     portion_size TEXT CHECK (char_length(portion_size) <= 50),
     notes TEXT CHECK (char_length(notes) <= 500),
+    meal_type TEXT CHECK (meal_type = ANY (ARRAY['breakfast'::text, 'lunch'::text, 'dinner'::text, 'snack'::text])),
+    image_base64 TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -119,4 +121,4 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- Trigger to create user profile on signup
 CREATE TRIGGER on_auth_user_created
     AFTER INSERT ON auth.users
-    FOR EACH ROW EXECUTE FUNCTION public.handle_new_user(); 
+    FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
