@@ -1,7 +1,7 @@
 // API Configuration for different environments
 const API_CONFIG = {
   development: {
-    baseURL: "http://192.168.178.21:3001/api", // Using Expo web for development
+    baseURL: "http://192.168.15.86:3001/api", // Using Expo web for development
   },
   production: {
     baseURL:

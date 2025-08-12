@@ -2,9 +2,9 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  Inject,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { SupabaseClient } from '@supabase/supabase-js';
 import {
   FoodLog,
   CreateFoodLogRequest,
@@ -12,20 +12,14 @@ import {
   FoodLogFilters,
   Database,
 } from '../types';
+import { SUPABASE_CLIENT } from '../common/services/supabase-client.provider';
 
 @Injectable()
 export class FoodLogsService {
-  private supabase: SupabaseClient<Database>;
-
-  constructor(private configService: ConfigService) {
-    const supabaseUrl = this.configService.get<string>('SUPABASE_URL');
-    const supabaseKey = this.configService.get<string>(
-      'SUPABASE_SERVICE_ROLE_KEY',
-    );
-    if (!supabaseUrl || !supabaseKey)
-      throw new Error('Missing Supabase configuration');
-    this.supabase = createClient<Database>(supabaseUrl, supabaseKey);
-  }
+  constructor(
+    @Inject(SUPABASE_CLIENT)
+    private readonly supabase: SupabaseClient<Database>,
+  ) {}
 
   async createFoodLog(
     userId: string,

@@ -1,4 +1,6 @@
 import { Test } from '@nestjs/testing';
+import { SupabaseAuthGuard } from './guards/supabase-auth.guard';
+import { ConfigService } from '@nestjs/config';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import {
@@ -35,7 +37,17 @@ describe('AuthController', () => {
   beforeEach(async () => {
     const module = await Test.createTestingModule({
       controllers: [AuthController],
-      providers: [{ provide: AuthService, useValue: mockAuthService }],
+      providers: [
+        { provide: AuthService, useValue: mockAuthService },
+        {
+          provide: SupabaseAuthGuard,
+          useValue: { canActivate: jest.fn().mockReturnValue(true) },
+        },
+        {
+          provide: ConfigService,
+          useValue: { get: jest.fn().mockReturnValue('http://localhost') },
+        },
+      ],
     }).compile();
     controller = module.get<AuthController>(AuthController);
     authService = module.get<AuthService>(AuthService);
@@ -146,10 +158,12 @@ describe('AuthController', () => {
 
   describe('getCurrentUser', () => {
     it('should return current user', async () => {
-      const mockRequest = { user: mockUser };
+      const mockRequest = { user: { id: mockUser.id } } as any;
+      mockAuthService.getUserById.mockResolvedValue(mockUser);
 
       const result = await controller.getCurrentUser(mockRequest);
 
+      expect(mockAuthService.getUserById).toHaveBeenCalledWith(mockUser.id);
       expect(result).toEqual({ success: true, data: mockUser });
     });
   });

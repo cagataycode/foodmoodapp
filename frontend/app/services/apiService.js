@@ -1,11 +1,12 @@
 import { getApiUrl } from "../config/api";
+import * as SecureStore from "expo-secure-store";
 
 const API_BASE_URL = getApiUrl();
 
 // Debug configuration
 // - set to __DEV__ for development
 // - set to false for production
-const DEBUG_MODE = false;
+const DEBUG_MODE = __DEV__;
 
 // Simple logger utility
 const logger = {
@@ -89,10 +90,8 @@ class ApiService {
   // Token storage methods
   async getStoredToken() {
     try {
-      // For now, we'll use a simple storage method
-      // In a real app, you'd use SecureStore or similar
-      // For development, we'll use a simple in-memory storage
-      return global.authToken || null;
+      const token = await SecureStore.getItemAsync("authToken");
+      return token || null;
     } catch (error) {
       logger.error("Error getting stored token:", error);
       return null;
@@ -101,9 +100,9 @@ class ApiService {
 
   async setStoredToken(token) {
     try {
-      // For development, we'll use a simple in-memory storage
-      // In production, use SecureStore or similar
-      global.authToken = token;
+      if (token) {
+        await SecureStore.setItemAsync("authToken", token);
+      }
     } catch (error) {
       logger.error("Error setting stored token:", error);
     }
@@ -111,9 +110,7 @@ class ApiService {
 
   async removeStoredToken() {
     try {
-      // For development, we'll use a simple in-memory storage
-      // In production, use SecureStore or similar
-      global.authToken = null;
+      await SecureStore.deleteItemAsync("authToken");
     } catch (error) {
       logger.error("Error removing stored token:", error);
     }
@@ -126,8 +123,8 @@ class ApiService {
       body: JSON.stringify({ email, password, username }),
     });
 
-    if (response.success && response.data.token) {
-      await this.setStoredToken(response.data.token);
+    if (response.success && response.data.access_token) {
+      await this.setStoredToken(response.data.access_token);
     }
 
     return response;
@@ -139,8 +136,8 @@ class ApiService {
       body: JSON.stringify({ email, password }),
     });
 
-    if (response.success && response.data.token) {
-      await this.setStoredToken(response.data.token);
+    if (response.success && response.data.access_token) {
+      await this.setStoredToken(response.data.access_token);
     }
 
     return response;

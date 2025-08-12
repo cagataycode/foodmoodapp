@@ -22,7 +22,7 @@ import {
   ApiQuery,
 } from '@nestjs/swagger';
 import { FoodLogsService } from './food-logs.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { SupabaseAuthGuard } from '../auth/guards/supabase-auth.guard';
 import {
   CreateFoodLogDto,
   UpdateFoodLogDto,
@@ -32,7 +32,7 @@ import {
 
 @ApiTags('Food Logs')
 @Controller('food-logs')
-@UseGuards(JwtAuthGuard)
+@UseGuards(SupabaseAuthGuard)
 @ApiBearerAuth()
 export class FoodLogsController {
   constructor(private readonly foodLogsService: FoodLogsService) {}

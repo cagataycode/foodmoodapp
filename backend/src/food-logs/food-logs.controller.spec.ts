@@ -7,6 +7,8 @@ import {
   FoodLogFiltersDto,
 } from '../common/dto/food-log.dto';
 import { NotFoundException } from '@nestjs/common';
+import { SupabaseAuthGuard } from '../auth/guards/supabase-auth.guard';
+import { ConfigService } from '@nestjs/config';
 
 describe('FoodLogsController', () => {
   let controller: FoodLogsController;
@@ -28,6 +30,14 @@ describe('FoodLogsController', () => {
         {
           provide: FoodLogsService,
           useValue: mockFoodLogsService,
+        },
+        {
+          provide: SupabaseAuthGuard,
+          useValue: { canActivate: jest.fn().mockReturnValue(true) },
+        },
+        {
+          provide: ConfigService,
+          useValue: { get: jest.fn().mockReturnValue('http://localhost') },
         },
       ],
     }).compile();
