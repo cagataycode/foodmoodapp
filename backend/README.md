@@ -19,7 +19,6 @@ A modern, scalable backend for the FoodMood app built with NestJS, TypeScript, a
 src/
 ├── auth/                    # Authentication module
 │   ├── guards/              # Route protection guards
-│   ├── strategies/          # Passport strategies
 │   ├── auth.controller.ts   # Auth endpoints
 │   ├── auth.service.ts      # Auth business logic
 │   └── auth.module.ts       # Auth module definition
@@ -70,7 +69,6 @@ src/
    SUPABASE_URL=your_supabase_url
    SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
    SUPABASE_ANON_KEY=your_anon_key
-   JWT_SECRET=your_jwt_secret_key
    PORT=3001
    NODE_ENV=development
    CORS_ORIGIN=http://localhost:3000
@@ -178,7 +176,7 @@ NODE_ENV=production
 PORT=3001
 SUPABASE_URL=your_production_supabase_url
 SUPABASE_SERVICE_ROLE_KEY=your_production_service_role_key
-JWT_SECRET=your_production_jwt_secret
+# JWT no longer used; backend verifies Supabase tokens. Remove JWT_SECRET.
 CORS_ORIGIN=https://your-frontend-domain.com
 ```
 
