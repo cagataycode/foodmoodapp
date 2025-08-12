@@ -3,10 +3,10 @@ import {
   UnauthorizedException,
   ConflictException,
   NotFoundException,
+  Inject,
 } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { Scope } from '@nestjs/common';
+import { SupabaseClient } from '@supabase/supabase-js';
 import {
   User,
   AuthRequest,
@@ -15,26 +15,14 @@ import {
   UpdateUserRequest,
   Database,
 } from '../types';
+import { SUPABASE_CLIENT } from '../common/services/supabase-client.provider';
 
-@Injectable()
+@Injectable({ scope: Scope.REQUEST })
 export class AuthService {
-  private supabase: SupabaseClient<Database>;
-
   constructor(
-    private jwtService: JwtService,
-    private configService: ConfigService,
-  ) {
-    const supabaseUrl = this.configService.get<string>('SUPABASE_URL');
-    const supabaseKey = this.configService.get<string>(
-      'SUPABASE_SERVICE_ROLE_KEY',
-    );
-
-    if (!supabaseUrl || !supabaseKey) {
-      throw new Error('Missing Supabase configuration');
-    }
-
-    this.supabase = createClient<Database>(supabaseUrl, supabaseKey);
-  }
+    @Inject(SUPABASE_CLIENT)
+    private readonly supabase: SupabaseClient<Database>,
+  ) {}
 
   /**
    * Register a new user
@@ -44,7 +32,7 @@ export class AuthService {
   ): Promise<AuthResponse> {
     const { email, password, username } = userData;
 
-    // Check if user already exists
+    // Pre-check: does a profile already exist for this email?
     const { data: existingUser } = await this.supabase
       .from('user_profiles')
       .select('id, email')
@@ -55,12 +43,12 @@ export class AuthService {
       throw new ConflictException('User with this email already exists');
     }
 
-    // Create user in Supabase Auth
+    // Create user in Supabase Auth (public sign-up)
     const { data: authUser, error: authError } =
-      await this.supabase.auth.admin.createUser({
+      await this.supabase.auth.signUp({
         email,
         password,
-        email_confirm: true,
+        options: { emailRedirectTo: undefined },
       });
 
     if (authError || !authUser.user) {
@@ -69,28 +57,21 @@ export class AuthService {
       );
     }
 
-    // Create user profile
-    const { data: profile, error: profileError } = await this.supabase
+    // Profile is created by DB trigger (see migrations). Try to fetch it; if not yet available, fallback.
+    const { data: fetchedProfile, error: profileError } = await this.supabase
       .from('user_profiles')
-      .insert({
-        id: authUser.user.id,
-        email,
-        username: username || null,
-        subscription_tier: 'free',
-      })
-      .select()
+      .select('*')
+      .eq('id', authUser.user.id)
       .single();
 
-    if (profileError || !profile) {
+    if (profileError || !fetchedProfile) {
       throw new UnauthorizedException('Failed to create user profile');
     }
 
-    // Generate JWT token
-    const token = this.generateToken(authUser.user.id);
-
     return {
-      user: profile,
-      token,
+      user: fetchedProfile as unknown as User,
+      access_token: authUser.session?.access_token,
+      refresh_token: authUser.session?.refresh_token,
     };
   }
 
@@ -122,12 +103,11 @@ export class AuthService {
       throw new NotFoundException('User profile not found');
     }
 
-    // Generate JWT token
-    const token = this.generateToken(authData.user.id);
-
     return {
       user: profile,
-      token,
+      // Return Supabase tokens for the client to store
+      access_token: authData.session?.access_token,
+      refresh_token: authData.session?.refresh_token,
     };
   }
 
@@ -190,16 +170,5 @@ export class AuthService {
     if (authError) {
       throw new UnauthorizedException('Failed to delete user account');
     }
-  }
-
-  /**
-   * Generate JWT token
-   */
-  private generateToken(userId: string): string {
-    const payload = { userId };
-    return this.jwtService.sign(payload, {
-      secret: this.configService.get<string>('JWT_SECRET'),
-      expiresIn: '7d',
-    });
   }
 }

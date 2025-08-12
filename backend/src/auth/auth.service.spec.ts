@@ -1,6 +1,6 @@
 import { Test } from '@nestjs/testing';
-import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { SUPABASE_CLIENT } from '../common/services/supabase-client.provider';
 import { AuthService } from './auth.service';
 import {
   ConflictException,
@@ -14,7 +14,6 @@ jest.mock('@supabase/supabase-js');
 describe('AuthService', () => {
   let service: AuthService;
   let mockSupabaseClient: any;
-  let mockJwtService: any;
 
   // Test data
   const userId = 'user-123';
@@ -53,10 +52,10 @@ describe('AuthService', () => {
       auth: {
         admin: { createUser: jest.fn(), deleteUser: jest.fn() },
         signInWithPassword: jest.fn(),
+        signUp: jest.fn(),
       },
       from: jest.fn(),
     };
-    mockJwtService = { sign: jest.fn().mockReturnValue('mock-jwt-token') };
 
     const mockConfigService = {
       get: jest.fn(
@@ -71,13 +70,15 @@ describe('AuthService', () => {
 
     (createClient as jest.Mock).mockReturnValue(mockSupabaseClient);
     const module = await Test.createTestingModule({
-      providers: [
-        AuthService,
-        { provide: JwtService, useValue: mockJwtService },
-        { provide: ConfigService, useValue: mockConfigService },
-      ],
-    }).compile();
-    service = module.get<AuthService>(AuthService);
+      providers: [AuthService],
+    })
+      .useMocker(token => {
+        if (token === SUPABASE_CLIENT) return mockSupabaseClient;
+
+        if (token === ConfigService) return mockConfigService as any;
+      })
+      .compile();
+    service = await module.resolve<AuthService>(AuthService);
   });
 
   afterEach(() => jest.clearAllMocks());
@@ -88,18 +89,21 @@ describe('AuthService', () => {
       mockQuery.single.mockResolvedValueOnce({ data: null, error: null });
       mockQuery.single.mockResolvedValueOnce({ data: mockUser, error: null });
       setupMock(jest.fn().mockReturnValue(mockQuery));
-      mockSupabaseClient.auth.admin.createUser.mockResolvedValue({
-        data: mockAuthUser,
+      mockSupabaseClient.auth.signUp.mockResolvedValue({
+        data: {
+          user: { id: userId },
+          session: { access_token: 'at', refresh_token: 'rt' },
+        },
         error: null,
       });
 
       const result = await service.register(validUserData);
 
-      expect(result).toEqual({ user: mockUser, token: 'mock-jwt-token' });
-      expect(mockJwtService.sign).toHaveBeenCalledWith(
-        { userId },
-        { secret: 'test-jwt-secret', expiresIn: '7d' },
-      );
+      expect(result).toEqual({
+        user: mockUser,
+        access_token: 'at',
+        refresh_token: 'rt',
+      });
     });
 
     it('should register without username', async () => {
@@ -111,8 +115,11 @@ describe('AuthService', () => {
         error: null,
       });
       setupMock(jest.fn().mockReturnValue(mockQuery));
-      mockSupabaseClient.auth.admin.createUser.mockResolvedValue({
-        data: mockAuthUser,
+      mockSupabaseClient.auth.signUp.mockResolvedValue({
+        data: {
+          user: { id: userId },
+          session: { access_token: 'at', refresh_token: 'rt' },
+        },
         error: null,
       });
 
@@ -135,7 +142,7 @@ describe('AuthService', () => {
       const mockQuery = createMockQuery();
       mockQuery.single.mockResolvedValue({ data: null, error: null });
       setupMock(jest.fn().mockReturnValue(mockQuery));
-      mockSupabaseClient.auth.admin.createUser.mockResolvedValue({
+      mockSupabaseClient.auth.signUp.mockResolvedValue({
         data: null,
         error: { message: 'Auth creation failed' },
       });
@@ -153,8 +160,11 @@ describe('AuthService', () => {
         error: { message: 'Profile creation failed' },
       });
       setupMock(jest.fn().mockReturnValue(mockQuery));
-      mockSupabaseClient.auth.admin.createUser.mockResolvedValue({
-        data: mockAuthUser,
+      mockSupabaseClient.auth.signUp.mockResolvedValue({
+        data: {
+          user: { id: userId },
+          session: { access_token: 'at', refresh_token: 'rt' },
+        },
         error: null,
       });
 
@@ -176,11 +186,11 @@ describe('AuthService', () => {
 
       const result = await service.login(validCredentials);
 
-      expect(result).toEqual({ user: mockUser, token: 'mock-jwt-token' });
-      expect(mockJwtService.sign).toHaveBeenCalledWith(
-        { userId },
-        { secret: 'test-jwt-secret', expiresIn: '7d' },
-      );
+      expect(result).toEqual({
+        user: mockUser,
+        access_token: undefined,
+        refresh_token: undefined,
+      });
     });
 
     it('should throw when credentials invalid', async () => {

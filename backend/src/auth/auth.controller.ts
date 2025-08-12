@@ -1,25 +1,33 @@
-import { 
-  Controller, 
-  Post, 
-  Get, 
-  Put, 
-  Delete, 
-  Body, 
-  Request, 
+import {
+  Controller,
+  Post,
+  Get,
+  Put,
+  Delete,
+  Body,
+  Request,
   UseGuards,
   HttpCode,
-  HttpStatus
+  HttpStatus,
 } from '@nestjs/common';
-import { 
-  ApiTags, 
-  ApiOperation, 
-  ApiResponse, 
+import {
+  ApiTags,
+  ApiOperation,
   ApiBearerAuth,
-  ApiBody 
+  ApiBody,
+  ApiOkResponse,
+  ApiCreatedResponse,
 } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { RegisterDto, LoginDto, UpdateProfileDto } from '../common/dto/auth.dto';
+import { SupabaseAuthGuard } from './guards/supabase-auth.guard';
+import {
+  RegisterDto,
+  LoginDto,
+  UpdateProfileDto,
+  AuthResponseDto,
+  UserResponseDto,
+  MessageResponseDto,
+} from '../common/dto/auth.dto';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -29,34 +37,10 @@ export class AuthController {
   @Post('register')
   @ApiOperation({ summary: 'Register a new user' })
   @ApiBody({ type: RegisterDto })
-  @ApiResponse({
-    status: 201,
+  @ApiCreatedResponse({
     description: 'User registered successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        success: { type: 'boolean', example: true },
-        data: {
-          type: 'object',
-          properties: {
-            user: {
-              type: 'object',
-              properties: {
-                id: { type: 'string' },
-                email: { type: 'string' },
-                username: { type: 'string' },
-                subscription_tier: { type: 'string' },
-              },
-            },
-            token: { type: 'string' },
-          },
-        },
-        message: { type: 'string', example: 'User registered successfully' },
-      },
-    },
+    type: AuthResponseDto,
   })
-  @ApiResponse({ status: 400, description: 'Validation failed' })
-  @ApiResponse({ status: 409, description: 'User already exists' })
   async register(@Body() registerDto: RegisterDto) {
     const result = await this.authService.register(registerDto);
     return {
@@ -70,34 +54,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Login user' })
   @ApiBody({ type: LoginDto })
-  @ApiResponse({
-    status: 200,
-    description: 'Login successful',
-    schema: {
-      type: 'object',
-      properties: {
-        success: { type: 'boolean', example: true },
-        data: {
-          type: 'object',
-          properties: {
-            user: {
-              type: 'object',
-              properties: {
-                id: { type: 'string' },
-                email: { type: 'string' },
-                username: { type: 'string' },
-                subscription_tier: { type: 'string' },
-              },
-            },
-            token: { type: 'string' },
-          },
-        },
-        message: { type: 'string', example: 'Login successful' },
-      },
-    },
-  })
-  @ApiResponse({ status: 400, description: 'Validation failed' })
-  @ApiResponse({ status: 401, description: 'Invalid credentials' })
+  @ApiOkResponse({ description: 'Login successful', type: AuthResponseDto })
   async login(@Body() loginDto: LoginDto) {
     const result = await this.authService.login(loginDto);
     return {
@@ -108,66 +65,38 @@ export class AuthController {
   }
 
   @Get('me')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(SupabaseAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get current user profile' })
-  @ApiResponse({
-    status: 200,
+  @ApiOkResponse({
     description: 'User profile retrieved successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        success: { type: 'boolean', example: true },
-        data: {
-          type: 'object',
-          properties: {
-            id: { type: 'string' },
-            email: { type: 'string' },
-            username: { type: 'string' },
-            subscription_tier: { type: 'string' },
-          },
-        },
-      },
-    },
+    type: UserResponseDto,
   })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getCurrentUser(@Request() req) {
+    const profile = await this.authService.getUserById(req.user.id);
     return {
       success: true,
-      data: req.user,
+      data: profile,
     };
   }
 
   @Put('profile')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(SupabaseAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update user profile' })
   @ApiBody({ type: UpdateProfileDto })
-  @ApiResponse({
-    status: 200,
+  @ApiOkResponse({
     description: 'Profile updated successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        success: { type: 'boolean', example: true },
-        data: {
-          type: 'object',
-          properties: {
-            id: { type: 'string' },
-            email: { type: 'string' },
-            username: { type: 'string' },
-            subscription_tier: { type: 'string' },
-          },
-        },
-        message: { type: 'string', example: 'Profile updated successfully' },
-      },
-    },
+    type: UserResponseDto,
   })
-  @ApiResponse({ status: 400, description: 'Validation failed' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 404, description: 'User not found' })
-  async updateProfile(@Request() req, @Body() updateProfileDto: UpdateProfileDto) {
-    const updatedUser = await this.authService.updateUser(req.user.id, updateProfileDto);
+  async updateProfile(
+    @Request() req,
+    @Body() updateProfileDto: UpdateProfileDto,
+  ) {
+    const updatedUser = await this.authService.updateUser(
+      req.user.id,
+      updateProfileDto,
+    );
     return {
       success: true,
       data: updatedUser,
@@ -176,21 +105,13 @@ export class AuthController {
   }
 
   @Delete('account')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(SupabaseAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Delete user account' })
-  @ApiResponse({
-    status: 200,
+  @ApiOkResponse({
     description: 'Account deleted successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        success: { type: 'boolean', example: true },
-        message: { type: 'string', example: 'Account deleted successfully' },
-      },
-    },
+    type: MessageResponseDto,
   })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async deleteAccount(@Request() req) {
     await this.authService.deleteUser(req.user.id);
     return {
@@ -198,4 +119,4 @@ export class AuthController {
       message: 'Account deleted successfully',
     };
   }
-} 
+}
