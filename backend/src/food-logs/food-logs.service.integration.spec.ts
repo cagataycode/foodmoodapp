@@ -1,5 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
+import { SUPABASE_CLIENT } from '../common/services/supabase-client.provider';
+import { createClient } from '@supabase/supabase-js';
 import { FoodLogsService } from './food-logs.service';
 import { CreateFoodLogRequest, UpdateFoodLogRequest } from '../types';
 import { TestDataGenerators } from '../test/integration.utils';
@@ -19,23 +21,28 @@ describe('FoodLogsService Integration Tests', () => {
     testUserId = 'd2deb26d-a428-43f5-94cc-d5ae96c3f357';
 
     // Initialize service once for all tests
+    const supabase = createClient(
+      process.env.SUPABASE_URL || 'http://localhost:54321',
+      process.env.SUPABASE_SERVICE_ROLE_KEY as string,
+    );
+
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        FoodLogsService,
-        {
-          provide: ConfigService,
-          useValue: {
-            get: jest.fn((key: string) => {
+      providers: [FoodLogsService],
+    })
+      .useMocker(token => {
+        if (token === SUPABASE_CLIENT) return supabase as any;
+        if (token === ConfigService)
+          return {
+            get: (key: string) => {
               if (key === 'SUPABASE_URL')
                 return process.env.SUPABASE_URL || 'http://localhost:54321';
               if (key === 'SUPABASE_SERVICE_ROLE_KEY')
                 return process.env.SUPABASE_SERVICE_ROLE_KEY;
               return null;
-            }),
-          },
-        },
-      ],
-    }).compile();
+            },
+          } as any;
+      })
+      .compile();
 
     service = module.get<FoodLogsService>(FoodLogsService);
   });

@@ -28,23 +28,22 @@ describe('FoodLogsService', () => {
     mockSupabase = mockSupabaseClient as any;
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        FoodLogsService,
-        { provide: ConfigService, useValue: mockConfigService },
-      ],
-    }).compile();
+      providers: [FoodLogsService],
+    })
+      .useMocker(token => {
+        if (token === ConfigService) {
+          return mockConfigService;
+        }
+        if (token && typeof token === 'string' && token === 'SUPABASE_CLIENT') {
+          return mockSupabase as any;
+        }
+      })
+      .compile();
 
     service = module.get<FoodLogsService>(FoodLogsService);
   });
 
-  describe('Constructor', () => {
-    it('should throw error when Supabase config is missing', () => {
-      mockConfigService.get.mockReturnValue(null);
-      expect(() => new FoodLogsService(mockConfigService)).toThrow(
-        'Missing Supabase configuration',
-      );
-    });
-  });
+  // Constructor no longer reads ConfigService directly; request-scoped provider handles setup
 
   describe('CRUD Operations', () => {
     const mockFoodLog: FoodLog = {
