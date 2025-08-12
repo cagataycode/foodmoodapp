@@ -57,19 +57,29 @@ export class AuthService {
       );
     }
 
-    // Profile is created by DB trigger (see migrations). Try to fetch it; if not yet available, fallback.
-    const { data: fetchedProfile, error: profileError } = await this.supabase
-      .from('user_profiles')
-      .select('*')
-      .eq('id', authUser.user.id)
-      .single();
-
-    if (profileError || !fetchedProfile) {
+    // Profile is created by DB trigger (see migrations).
+    // Retry briefly to avoid race condition if trigger hasn't completed yet.
+    const fetchProfileWithRetry = async (
+      maxAttempts = 5,
+      delayMs = 150,
+    ): Promise<User> => {
+      for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+        const { data, error } = await this.supabase
+          .from('user_profiles')
+          .select('*')
+          .eq('id', authUser.user.id)
+          .single();
+        if (!error && data) return data as unknown as User;
+        if (attempt < maxAttempts)
+          await new Promise(r => setTimeout(r, delayMs));
+      }
       throw new UnauthorizedException('Failed to create user profile');
-    }
+    };
+
+    const fetchedProfile = await fetchProfileWithRetry();
 
     return {
-      user: fetchedProfile as unknown as User,
+      user: fetchedProfile,
       access_token: authUser.session?.access_token,
       refresh_token: authUser.session?.refresh_token,
     };

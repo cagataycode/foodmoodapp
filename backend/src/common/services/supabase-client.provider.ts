@@ -21,7 +21,21 @@ export const SupabaseClientProvider = {
       throw new Error('Missing Supabase configuration');
     }
 
-    const authHeader = req.headers['authorization'];
+    const rawAuthHeader = req.headers['authorization'];
+
+    const sanitizeAuthorizationHeader = (
+      header: unknown,
+    ): string | undefined => {
+      if (!header || typeof header !== 'string') return undefined;
+      const trimmed = header.trim();
+      if (!trimmed.toLowerCase().startsWith('bearer ')) return undefined;
+      const token = trimmed.slice(7).trim();
+      // Basic token shape check (JWT-like); still delegated to Supabase for actual validation
+      if (!token || token.length < 16) return undefined;
+      return `Bearer ${token}`;
+    };
+
+    const authHeader = sanitizeAuthorizationHeader(rawAuthHeader);
 
     return createClient<Database>(supabaseUrl, supabaseAnonKey, {
       auth: {
@@ -29,7 +43,7 @@ export const SupabaseClientProvider = {
         autoRefreshToken: false,
       },
       global: {
-        headers: authHeader ? { Authorization: String(authHeader) } : {},
+        headers: authHeader ? { Authorization: authHeader } : {},
       },
     });
   },
