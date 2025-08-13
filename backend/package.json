@@ -19,6 +19,7 @@
         "test:integration": "jest --testMatch='**/*.integration.spec.ts'",
         "test:e2e-full": "jest --testMatch='**/*.e2e.spec.ts'",
         "test:all": "jest --testMatch='**/*.spec.ts'",
+        "test:remote": "ALLOW_E2E_ON_REMOTE=true jest --testMatch='**/*.spec.ts'",
         "supabase:dev": "supabase start",
         "deploy": "supabase functions deploy",
         "db:reset": "supabase db reset",
