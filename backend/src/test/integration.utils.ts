@@ -19,6 +19,14 @@ export class TestDataManager {
         'SUPABASE_SERVICE_ROLE_KEY environment variable is required',
       );
     }
+    if (
+      !TEST_CONFIG.SUPABASE_URL.includes('localhost') &&
+      !process.env.ALLOW_E2E_ON_REMOTE
+    ) {
+      throw new Error(
+        'Refusing to run tests against a non-local Supabase. Set ALLOW_E2E_ON_REMOTE=true to override.',
+      );
+    }
     this.supabase = createClient(
       TEST_CONFIG.SUPABASE_URL,
       TEST_CONFIG.SUPABASE_SERVICE_ROLE_KEY,

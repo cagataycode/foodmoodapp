@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { SUPABASE_CLIENT } from '../common/services/supabase-client.provider';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { FoodLogsService } from './food-logs.service';
 import { CreateFoodLogRequest, UpdateFoodLogRequest } from '../types';
 import { TestDataGenerators } from '../test/integration.utils';
@@ -10,6 +10,8 @@ describe('FoodLogsService Integration Tests', () => {
   let service: FoodLogsService;
   let testUserId: string;
   let testFoodLogId: string;
+  let supabase: SupabaseClient;
+  let createdTestUser: { id: string } | null = null;
 
   beforeAll(async () => {
     if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
@@ -17,12 +19,18 @@ describe('FoodLogsService Integration Tests', () => {
         'SUPABASE_SERVICE_ROLE_KEY environment variable is required for integration tests',
       );
     }
-    // Use the specific test user ID provided
-    testUserId = 'd2deb26d-a428-43f5-94cc-d5ae96c3f357';
-
-    // Initialize service once for all tests
-    const supabase = createClient(
-      process.env.SUPABASE_URL || 'http://localhost:54321',
+    // Initialize admin client and guard against accidental remote runs
+    const supabaseUrl = process.env.SUPABASE_URL || 'http://localhost:54321';
+    if (
+      !supabaseUrl.includes('localhost') &&
+      !process.env.ALLOW_E2E_ON_REMOTE
+    ) {
+      throw new Error(
+        'Refusing to run integration tests against a non-local Supabase. Set ALLOW_E2E_ON_REMOTE=true to override.',
+      );
+    }
+    supabase = createClient(
+      supabaseUrl,
       process.env.SUPABASE_SERVICE_ROLE_KEY as string,
     );
 
@@ -34,8 +42,7 @@ describe('FoodLogsService Integration Tests', () => {
         if (token === ConfigService)
           return {
             get: (key: string) => {
-              if (key === 'SUPABASE_URL')
-                return process.env.SUPABASE_URL || 'http://localhost:54321';
+              if (key === 'SUPABASE_URL') return supabaseUrl;
               if (key === 'SUPABASE_SERVICE_ROLE_KEY')
                 return process.env.SUPABASE_SERVICE_ROLE_KEY;
               return null;
@@ -45,9 +52,33 @@ describe('FoodLogsService Integration Tests', () => {
       .compile();
 
     service = module.get<FoodLogsService>(FoodLogsService);
+
+    // Create an ephemeral test user to satisfy FK constraints
+    const uniqueEmail = `itest-${Date.now()}-${Math.random()
+      .toString(36)
+      .slice(2)}@example.com`;
+    const { data, error } = await supabase.auth.admin.createUser({
+      email: uniqueEmail,
+      password: 'Test1234!',
+      email_confirm: true,
+    });
+    if (error || !data?.user) {
+      throw new Error(`Failed to create test user: ${error?.message}`);
+    }
+    createdTestUser = { id: data.user.id };
+    testUserId = data.user.id;
   });
 
-  afterAll(async () => await cleanupAllTestData());
+  afterAll(async () => {
+    await cleanupAllTestData();
+    if (createdTestUser) {
+      try {
+        await supabase.auth.admin.deleteUser(createdTestUser.id);
+      } catch (_) {
+        // ignore
+      }
+    }
+  });
   beforeEach(async () => await setupTestData());
   afterEach(async () => await cleanupTestData());
 
