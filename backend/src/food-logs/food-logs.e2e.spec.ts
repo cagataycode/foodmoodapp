@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SUPABASE_CLIENT } from '../common/services/supabase-client.provider';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { FoodLogsController } from './food-logs.controller';
 import { FoodLogsService } from './food-logs.service';
 import {
@@ -19,6 +19,8 @@ describe('FoodLogs E2E Integration Tests', () => {
   let service: FoodLogsService;
   let testUserId: string;
   let testFoodLogId: string;
+  let supabase: SupabaseClient;
+  let createdTestUser: { id: string } | null = null;
 
   beforeAll(async () => {
     if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
@@ -26,11 +28,17 @@ describe('FoodLogs E2E Integration Tests', () => {
         'SUPABASE_SERVICE_ROLE_KEY environment variable is required for E2E tests',
       );
     }
-    // Use the specific test user ID that works
-    testUserId = 'd2deb26d-a428-43f5-94cc-d5ae96c3f357';
-
-    const supabase = createClient(
-      process.env.SUPABASE_URL || 'http://localhost:54321',
+    const supabaseUrl = process.env.SUPABASE_URL || 'http://localhost:54321';
+    if (
+      !supabaseUrl.includes('localhost') &&
+      !process.env.ALLOW_E2E_ON_REMOTE
+    ) {
+      throw new Error(
+        'Refusing to run E2E tests against a non-local Supabase. Set ALLOW_E2E_ON_REMOTE=true to override.',
+      );
+    }
+    supabase = createClient(
+      supabaseUrl,
       process.env.SUPABASE_SERVICE_ROLE_KEY as string,
     );
 
@@ -43,8 +51,7 @@ describe('FoodLogs E2E Integration Tests', () => {
         if (token === ConfigService)
           return {
             get: (key: string) => {
-              if (key === 'SUPABASE_URL')
-                return process.env.SUPABASE_URL || 'http://localhost:54321';
+              if (key === 'SUPABASE_URL') return supabaseUrl;
               if (key === 'SUPABASE_SERVICE_ROLE_KEY')
                 return process.env.SUPABASE_SERVICE_ROLE_KEY;
               return null;
@@ -57,6 +64,21 @@ describe('FoodLogs E2E Integration Tests', () => {
     await app.init();
     controller = moduleFixture.get<FoodLogsController>(FoodLogsController);
     service = moduleFixture.get<FoodLogsService>(FoodLogsService);
+
+    // Create an ephemeral test user so we don't touch real accounts
+    const uniqueEmail = `e2e-${Date.now()}-${Math.random()
+      .toString(36)
+      .slice(2)}@example.com`;
+    const { data, error } = await supabase.auth.admin.createUser({
+      email: uniqueEmail,
+      password: 'Test1234!',
+      email_confirm: true,
+    });
+    if (error || !data?.user) {
+      throw new Error(`Failed to create E2E test user: ${error?.message}`);
+    }
+    createdTestUser = { id: data.user.id };
+    testUserId = data.user.id;
   });
 
   // Create a mock request object for testing
@@ -66,7 +88,16 @@ describe('FoodLogs E2E Integration Tests', () => {
 
   afterAll(async () => {
     await cleanupAllTestData();
-    await app.close();
+    if (createdTestUser) {
+      try {
+        await supabase.auth.admin.deleteUser(createdTestUser.id);
+      } catch (_) {
+        // ignore
+      }
+    }
+    if (app) {
+      await app.close();
+    }
   });
 
   beforeEach(async () => {
