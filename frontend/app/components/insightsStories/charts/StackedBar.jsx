@@ -2,7 +2,6 @@ import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { scaleLinear } from "d3-scale";
 
-// Minimal stacked bar for 3 categories and multiple series
 const StackedBar = ({ categories = [], series = [] }) => {
   if (!categories.length || !series.length) return null;
 
@@ -27,14 +26,13 @@ const StackedBar = ({ categories = [], series = [] }) => {
               >
                 {series.map((s) => {
                   const value = s.data[catIdx] || 0;
-                  const widthPercent = `${(value / total) * 100}%`;
                   return (
                     <View
                       key={`${s.name}-${cat}`}
                       style={[
                         styles.segment,
                         {
-                          width: widthPercent,
+                          width: `${(value / total) * 100}%`,
                           backgroundColor: s.color || "#bbb",
                         },
                       ]}
@@ -47,6 +45,7 @@ const StackedBar = ({ categories = [], series = [] }) => {
           );
         })}
       </View>
+
       <View style={styles.legendWrap}>
         {series.map((s) => (
           <View key={s.name} style={styles.legendItem}>
@@ -65,19 +64,14 @@ const StackedBar = ({ categories = [], series = [] }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    marginTop: 12,
-  },
+  container: { marginTop: 12 },
   barsWrap: {
     flexDirection: "row",
     justifyContent: "space-between",
     gap: 12,
     paddingHorizontal: 8,
   },
-  barCol: {
-    alignItems: "center",
-    flex: 1,
-  },
+  barCol: { alignItems: "center", flex: 1 },
   barStackTrack: {
     height: 100,
     width: "100%",
@@ -86,14 +80,8 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     flexDirection: "row",
   },
-  segment: {
-    height: "100%",
-  },
-  catLabel: {
-    marginTop: 6,
-    fontSize: 12,
-    color: "#6B7280",
-  },
+  segment: { height: "100%" },
+  catLabel: { marginTop: 6, fontSize: 12, color: "#6B7280" },
   legendWrap: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -106,16 +94,8 @@ const styles = StyleSheet.create({
     marginRight: 12,
     marginBottom: 6,
   },
-  legendSwatch: {
-    width: 12,
-    height: 12,
-    borderRadius: 2,
-    marginRight: 6,
-  },
-  legendText: {
-    fontSize: 12,
-    color: "#374151",
-  },
+  legendSwatch: { width: 12, height: 12, borderRadius: 2, marginRight: 6 },
+  legendText: { fontSize: 12, color: "#374151" },
 });
 
 export default StackedBar;
