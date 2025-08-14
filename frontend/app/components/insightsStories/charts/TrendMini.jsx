@@ -2,9 +2,9 @@ import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { scaleLinear } from "d3-scale";
 
-// Simple tiny trend lines based on pre-normalized values 0..1
 const TrendMini = ({ data = [], groups = [] }) => {
   if (!data.length) return null;
+
   const dates = Array.from(new Set(data.map((d) => d.date))).sort();
   const byGroup = groups.map((g) => ({
     name: g.name,
@@ -43,6 +43,7 @@ const TrendMini = ({ data = [], groups = [] }) => {
           </View>
         </View>
       ))}
+
       <View style={styles.xAxis}>
         {dates.map((d) => (
           <Text key={d} style={styles.tick}>
@@ -61,51 +62,20 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderRadius: 12,
   },
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 6,
-  },
-  legend: {
-    width: 140,
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  swatch: {
-    width: 12,
-    height: 12,
-    borderRadius: 2,
-    marginRight: 6,
-  },
-  legendText: {
-    fontSize: 12,
-    color: "#374151",
-  },
-  series: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "flex-end",
-  },
+  row: { flexDirection: "row", alignItems: "center", marginBottom: 6 },
+  legend: { width: 140, flexDirection: "row", alignItems: "center" },
+  swatch: { width: 12, height: 12, borderRadius: 2, marginRight: 6 },
+  legendText: { fontSize: 12, color: "#374151" },
+  series: { flex: 1, flexDirection: "row", alignItems: "flex-end" },
   pointWrap: {
     flex: 1,
     alignItems: "center",
     justifyContent: "flex-end",
     height: 32,
   },
-  point: {
-    width: 5,
-    borderRadius: 3,
-  },
-  xAxis: {
-    marginTop: 6,
-    flexDirection: "row",
-  },
-  tick: {
-    flex: 1,
-    textAlign: "center",
-    fontSize: 10,
-    color: "#6B7280",
-  },
+  point: { width: 5, borderRadius: 3 },
+  xAxis: { marginTop: 6, flexDirection: "row" },
+  tick: { flex: 1, textAlign: "center", fontSize: 10, color: "#6B7280" },
 });
 
 export default TrendMini;

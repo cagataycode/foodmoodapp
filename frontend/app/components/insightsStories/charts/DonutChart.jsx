@@ -24,6 +24,7 @@ const DonutChart = ({
 }) => {
   const total = data.reduce((sum, d) => sum + d.value, 0) || 1;
   const center = size / 2;
+  const percent = (v) => format(".0%")((v || 0) / total);
 
   const colorScale = scaleOrdinal()
     .domain(data.map((d) => d.label))
@@ -34,15 +35,13 @@ const DonutChart = ({
     .sort(null)
     .padAngle((Math.PI / 180) * 2)
     .value((d) => d.value);
-  const arcs = pieGen(data);
 
+  const arcs = pieGen(data);
   const arcGen = d3Shape
     .arc()
     .outerRadius(size / 2)
     .innerRadius(innerRadius)
     .cornerRadius(6);
-
-  const percent = (v) => format(".0%")((v || 0) / total);
 
   return (
     <View style={styles.wrap}>
@@ -58,7 +57,7 @@ const DonutChart = ({
             />
           ))}
           <Circle cx={0} cy={0} r={innerRadius - 2} fill="#fff" />
-          {centerLabel ? (
+          {centerLabel && (
             <SvgText
               x={0}
               y={-2}
@@ -69,8 +68,8 @@ const DonutChart = ({
             >
               {centerLabel}
             </SvgText>
-          ) : null}
-          {data && data.length > 0 ? (
+          )}
+          {data?.[0] && (
             <SvgText
               x={0}
               y={16}
@@ -80,9 +79,10 @@ const DonutChart = ({
             >
               {`${percent(data[0].value)} ${data[0].label}`}
             </SvgText>
-          ) : null}
+          )}
         </G>
       </Svg>
+
       {showLegend && (
         <View style={styles.legendWrap}>
           {data.map((d) => (

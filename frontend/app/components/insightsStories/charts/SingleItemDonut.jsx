@@ -15,12 +15,14 @@ const SingleItemDonut = ({
     .sort(null)
     .padAngle((Math.PI / 180) * 2)
     .value((d) => d.value);
+
   const arcs = pieGen(data);
   const arcGen = d3Shape
     .arc()
     .outerRadius(size / 2)
     .innerRadius(innerRadius)
     .cornerRadius(6);
+
   const center = size / 2;
   const total = data.reduce((sum, d) => sum + d.value, 0) || 1;
   const fmt = format(".0%");
@@ -28,7 +30,7 @@ const SingleItemDonut = ({
 
   return (
     <View style={[styles.container, { paddingHorizontal: 8 }]}>
-      {title ? <Text style={styles.title}>{title}</Text> : null}
+      {title && <Text style={styles.title}>{title}</Text>}
       <Svg width={size} height={size}>
         <G x={center} y={center}>
           {arcs.map((arc, i) => (
@@ -67,15 +69,8 @@ const SingleItemDonut = ({
 };
 
 const styles = StyleSheet.create({
-  container: {
-    alignItems: "center",
-  },
-  title: {
-    fontSize: 13,
-    color: "#374151",
-    marginBottom: 8,
-    fontWeight: "600",
-  },
+  container: { alignItems: "center" },
+  title: { fontSize: 13, color: "#374151", marginBottom: 8, fontWeight: "600" },
 });
 
 export default SingleItemDonut;

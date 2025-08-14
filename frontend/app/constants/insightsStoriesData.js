@@ -27,11 +27,7 @@ export const INSIGHTS_STORIES = [
     caption: "Donut chart shows normalized percentages (6/18 ≈ 33% each).",
     caption_science:
       "Small, frequent logs reveal trends over days—not single meals.",
-    palette: {
-      background: "#F6F8FA",
-      text: "#2c3e50",
-      accent: "#95A5A6",
-    },
+    palette: { background: "#F6F8FA", text: "#2c3e50", accent: "#95A5A6" },
   },
   {
     title: "What lifted you up",
@@ -59,11 +55,7 @@ export const INSIGHTS_STORIES = [
     caption: "Stacked bars show distribution of positive moods by meal.",
     caption_science:
       "Low‑GI carbs + protein can support steadier focus and calm.",
-    palette: {
-      background: "#F0FAF7",
-      text: "#0F172A",
-      accent: "#10B981",
-    },
+    palette: { background: "#F0FAF7", text: "#0F172A", accent: "#10B981" },
   },
   {
     title: "What slowed you down",
@@ -91,12 +83,8 @@ export const INSIGHTS_STORIES = [
     caption:
       "Single‑item donut shows proportion of sleepy for bagel breakfasts.",
     caption_science:
-      "Bigger or oilier meals slow digestion—‘food coma’ can happen.",
-    palette: {
-      background: "#FFF8ED",
-      text: "#7C3A00",
-      accent: "#F59E0B",
-    },
+      "Bigger or oilier meals slow digestion—'food coma' can happen.",
+    palette: { background: "#FFF8ED", text: "#7C3A00", accent: "#F59E0B" },
   },
   {
     title: "Simple rhythms",
