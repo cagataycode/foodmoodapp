@@ -8,6 +8,8 @@ import EmptyState from "./EmptyState";
 import LogFoodModal from "./LogFoodModal";
 import MoodPalette from "./MoodPalette";
 import LoadingScreen from "./LoadingScreen";
+import StoriesCarousel from "./insightsStories/StoriesCarousel";
+import StoriesViewer from "./insightsStories/StoriesViewer";
 
 export {
   TopBar,
@@ -20,6 +22,8 @@ export {
   LogFoodModal,
   MoodPalette,
   LoadingScreen,
+  StoriesCarousel,
+  StoriesViewer,
 };
 
 // Default export for Expo Router compatibility
@@ -34,4 +38,6 @@ export default {
   LogFoodModal,
   MoodPalette,
   LoadingScreen,
+  StoriesCarousel,
+  StoriesViewer,
 };

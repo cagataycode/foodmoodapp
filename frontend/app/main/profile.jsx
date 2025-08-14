@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -8,19 +8,15 @@ import {
   ScrollView,
 } from "react-native";
 import { router } from "expo-router";
-import { TopBar, Avatar } from "../components";
+import { TopBar, Avatar, StoriesCarousel, StoriesViewer } from "../components";
+import { INSIGHTS_STORIES } from "../constants/insightsStoriesData";
 import { useAuth } from "../contexts/AuthContext";
 
-const periodData = [
-  { label: "This Week", days: 7, logs: 21, period: "this-week" },
-  { label: "Last Week", days: 7, logs: 21, period: "last-week" },
-  { label: "3 Weeks Ago", days: 7, logs: 21, period: "3-weeks-ago" },
-  { label: "4 Weeks Ago", days: 7, logs: 21, period: "4-weeks-ago" },
-  { label: "This Month", days: 30, logs: 84, period: "this-month" },
-];
+// Removed period list; replaced with single CTA for weekly insights
 
 const Profile = () => {
   const { isAuthenticated, loading, user } = useAuth();
+  const [showStories, setShowStories] = useState(false);
 
   if (loading) {
     return <Text>Loading...</Text>;
@@ -45,25 +41,27 @@ const Profile = () => {
               <Text style={styles.editButtonText}>Edit Profile</Text>
             </TouchableOpacity>
           </View>
-          <View style={styles.periodsSection}>
-            {periodData.map((period) => (
-              <View key={period.period} style={styles.periodGroup}>
-                <Text style={styles.periodLabel}>{period.label}</Text>
-                <TouchableOpacity
-                  style={styles.periodCard}
-                  onPress={() =>
-                    router.push(`/main/insights?period=${period.period}`)
-                  }
-                >
-                  <Text style={styles.periodCardText}>
-                    {period.days} days - {period.logs} logs
-                  </Text>
-                  <Text style={styles.periodCardArrow}>›</Text>
-                </TouchableOpacity>
+          <View style={styles.ctaWrap}>
+            <TouchableOpacity
+              style={styles.ctaCard}
+              onPress={() => setShowStories(true)}
+              activeOpacity={0.9}
+            >
+              <View style={styles.ctaBadge}>
+                <Text style={styles.ctaBadgeText}>NEW</Text>
               </View>
-            ))}
+              <Text style={styles.ctaTitle}>
+                Your weekly insights are ready
+              </Text>
+              <Text style={styles.ctaSubtitle}>Tap to view stories →</Text>
+            </TouchableOpacity>
           </View>
         </ScrollView>
+        <StoriesViewer
+          pages={INSIGHTS_STORIES}
+          visible={showStories}
+          onClose={() => setShowStories(false)}
+        />
       </SafeAreaView>
     </View>
   );
@@ -104,8 +102,39 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
   },
-  periodsSection: {
+  ctaWrap: {
     marginTop: 8,
+  },
+  ctaCard: {
+    backgroundColor: "#111827",
+    borderRadius: 14,
+    paddingVertical: 18,
+    paddingHorizontal: 16,
+  },
+  ctaBadge: {
+    alignSelf: "flex-start",
+    backgroundColor: "#22C55E",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    marginBottom: 8,
+  },
+  ctaBadgeText: {
+    color: "#052e16",
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 0.4,
+  },
+  ctaTitle: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "800",
+    marginBottom: 4,
+  },
+  ctaSubtitle: {
+    color: "#9CA3AF",
+    fontSize: 14,
+    fontWeight: "600",
   },
   periodGroup: {
     marginBottom: 12,
