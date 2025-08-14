@@ -12,15 +12,13 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import StoryCard from "./StoryCard";
 
 const { width, height } = Dimensions.get("window");
-
 const AUTO_ADVANCE_MS = 4500;
 
-const StoriesViewer = ({ pages = [], visible, onClose }) => {
+const useStoryProgress = (visible, pages, onClose) => {
   const [index, setIndex] = useState(0);
   const [progress, setProgress] = useState(0);
-  const timerRef = useRef(null);
-  const insets = useSafeAreaInsets();
   const [isPaused, setIsPaused] = useState(false);
+  const timerRef = useRef(null);
   const pausedProgressRef = useRef(0);
 
   useEffect(() => {
@@ -34,15 +32,15 @@ const StoriesViewer = ({ pages = [], visible, onClose }) => {
   useEffect(() => {
     clearInterval(timerRef.current);
     if (!visible || isPaused) return;
+
     const startedAt = Date.now() - pausedProgressRef.current * AUTO_ADVANCE_MS;
     timerRef.current = setInterval(() => {
       const elapsed = Date.now() - startedAt;
       const p = Math.min(1, elapsed / AUTO_ADVANCE_MS);
       setProgress(p);
-      if (p >= 1) {
-        handleNext();
-      }
+      if (p >= 1) handleNext();
     }, 100);
+
     return () => clearInterval(timerRef.current);
   }, [index, visible, isPaused]);
 
@@ -73,9 +71,83 @@ const StoriesViewer = ({ pages = [], visible, onClose }) => {
     setIsPaused(true);
   };
 
-  const handleHoldEnd = () => {
-    setIsPaused(false);
+  const handleHoldEnd = () => setIsPaused(false);
+
+  return {
+    index,
+    progress,
+    handleNext,
+    handlePrev,
+    handleHoldStart,
+    handleHoldEnd,
   };
+};
+
+const ProgressBar = ({ pages, index, progress, insets }) => (
+  <View
+    style={[styles.progressRow, { top: Math.max(6, (insets?.top || 0) + 6) }]}
+    pointerEvents="none"
+  >
+    {pages.map((_, i) => (
+      <View key={i} style={styles.progressTrack}>
+        <View
+          style={[
+            styles.progressFill,
+            {
+              width:
+                i < index
+                  ? "100%"
+                  : i === index
+                  ? `${Math.round(progress * 100)}%`
+                  : 0,
+            },
+          ]}
+        />
+      </View>
+    ))}
+  </View>
+);
+
+const TappableZones = ({ onPrev, onNext, onHoldStart, onHoldEnd }) => (
+  <View style={styles.tappableZones}>
+    <TouchableOpacity
+      style={styles.leftZone}
+      activeOpacity={0.5}
+      onPress={onPrev}
+    />
+    <Pressable
+      style={styles.centerHoldZone}
+      onPressIn={onHoldStart}
+      onPressOut={onHoldEnd}
+    />
+    <TouchableOpacity
+      style={styles.rightZone}
+      activeOpacity={0.5}
+      onPress={onNext}
+    />
+  </View>
+);
+
+const CloseButton = ({ onClose, insets }) => (
+  <TouchableOpacity
+    accessibilityRole="button"
+    onPress={onClose}
+    style={[styles.closeButton, { top: Math.max(8, (insets?.top || 0) + 2) }]}
+  >
+    <Text style={styles.closeText}>✕</Text>
+  </TouchableOpacity>
+);
+
+const StoriesViewer = ({ pages = [], visible, onClose }) => {
+  const insets = useSafeAreaInsets();
+  const {
+    index,
+    progress,
+    handleNext,
+    handlePrev,
+    handleHoldStart,
+    handleHoldEnd,
+  } = useStoryProgress(visible, pages, onClose);
 
   if (!visible) return null;
 
@@ -87,64 +159,26 @@ const StoriesViewer = ({ pages = [], visible, onClose }) => {
         translucent
         backgroundColor="transparent"
       />
-      <View
-        style={[
-          styles.progressRow,
-          { top: Math.max(6, (insets?.top || 0) + 6) },
-        ]}
-        pointerEvents="none"
-      >
-        {pages.map((_, i) => (
-          <View key={i} style={styles.progressTrack}>
-            <View
-              style={[
-                styles.progressFill,
-                {
-                  width:
-                    i < index
-                      ? "100%"
-                      : i === index
-                      ? `${Math.round(progress * 100)}%`
-                      : 0,
-                },
-              ]}
-            />
-          </View>
-        ))}
-      </View>
+
+      <ProgressBar
+        pages={pages}
+        index={index}
+        progress={progress}
+        insets={insets}
+      />
 
       <View style={styles.cardWrap}>
         <StoryCard page={pages[index]} fullscreen />
       </View>
 
-      <View style={styles.tappableZones}>
-        <TouchableOpacity
-          style={styles.leftZone}
-          activeOpacity={0.5}
-          onPress={handlePrev}
-        />
-        <Pressable
-          style={styles.centerHoldZone}
-          onPressIn={handleHoldStart}
-          onPressOut={handleHoldEnd}
-        />
-        <TouchableOpacity
-          style={styles.rightZone}
-          activeOpacity={0.5}
-          onPress={handleNext}
-        />
-      </View>
+      <TappableZones
+        onPrev={handlePrev}
+        onNext={handleNext}
+        onHoldStart={handleHoldStart}
+        onHoldEnd={handleHoldEnd}
+      />
 
-      <TouchableOpacity
-        accessibilityRole="button"
-        onPress={onClose}
-        style={[
-          styles.closeButton,
-          { top: Math.max(8, (insets?.top || 0) + 2) },
-        ]}
-      >
-        <Text style={styles.closeText}>✕</Text>
-      </TouchableOpacity>
+      <CloseButton onClose={onClose} insets={insets} />
     </View>
   );
 };
@@ -209,10 +243,7 @@ const styles = StyleSheet.create({
     padding: 10,
     zIndex: 4,
   },
-  closeText: {
-    color: "#fff",
-    fontSize: 18,
-  },
+  closeText: { color: "#fff", fontSize: 18 },
 });
 
 export default StoriesViewer;
