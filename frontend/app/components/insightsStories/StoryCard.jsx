@@ -9,16 +9,92 @@ import Chips from "./Chips";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
+const ChartRenderer = ({ chart, secondaryChart, fullscreen }) => {
+  const renderChart = () => {
+    switch (chart?.type) {
+      case "donut":
+        return (
+          <DonutChart
+            data={chart.data}
+            centerLabel={chart.centerLabel}
+            size={fullscreen ? Math.min(SCREEN_WIDTH - 80, 260) : 200}
+          />
+        );
+      case "stackedBar":
+        return (
+          <StackedBar categories={chart.categories} series={chart.series} />
+        );
+      case "singleItemDonut":
+        return (
+          <SingleItemDonut
+            title={chart.dataTitle}
+            data={chart.data}
+            size={fullscreen ? Math.min(SCREEN_WIDTH - 80, 220) : undefined}
+          />
+        );
+      case "trendMini":
+        return <TrendMini data={chart.data} groups={chart.groups} />;
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <View style={fullscreen ? styles.chartSectionFullscreen : null}>
+      {renderChart()}
+      {secondaryChart?.type === "barRow" && (
+        <BarRow title={secondaryChart.title} data={secondaryChart.data} />
+      )}
+    </View>
+  );
+};
+
+const BulletPoints = ({ bullets, fullscreen }) => (
+  <View style={fullscreen ? styles.bulletsFullscreen : styles.bullets}>
+    {bullets?.slice(0, 3).map((b, idx) => (
+      <View key={idx} style={styles.bulletRow}>
+        <Text style={styles.bulletDot}>•</Text>
+        <Text
+          style={fullscreen ? styles.bulletTextFullscreen : styles.bulletText}
+        >
+          {b}
+        </Text>
+      </View>
+    ))}
+  </View>
+);
+
+const CaptionSection = ({ caption, caption_science, fullscreen }) => (
+  <>
+    {caption && (
+      <Text style={fullscreen ? styles.captionFullscreen : styles.caption}>
+        {caption}
+      </Text>
+    )}
+    {caption_science && (
+      <Text
+        style={
+          fullscreen ? styles.captionScienceFullscreen : styles.captionScience
+        }
+      >
+        {caption_science} (See: SCIENTIFIC BREAKDOWN.PDF)
+      </Text>
+    )}
+  </>
+);
+
 const StoryCard = ({ page, fullscreen = false }) => {
   const palette = page?.palette || {};
+  const isFullscreen = fullscreen;
+
   return (
     <View
       style={[
-        fullscreen ? styles.fullscreen : styles.card,
+        isFullscreen ? styles.fullscreen : styles.card,
         { backgroundColor: palette.background || "#fff" },
       ]}
     >
-      {fullscreen ? (
+      {isFullscreen ? (
         <View style={styles.innerFullscreen}>
           <View style={styles.headerSection}>
             <Text
@@ -29,7 +105,7 @@ const StoryCard = ({ page, fullscreen = false }) => {
             >
               {page.title}
             </Text>
-            {page.subtitle ? (
+            {page.subtitle && (
               <Text
                 style={[
                   styles.subtitleFullscreen,
@@ -38,59 +114,23 @@ const StoryCard = ({ page, fullscreen = false }) => {
               >
                 {page.subtitle}
               </Text>
-            ) : null}
-            <View style={styles.bulletsFullscreen}>
-              {page.bullets?.slice(0, 3).map((b, idx) => (
-                <View key={idx} style={styles.bulletRow}>
-                  <Text style={styles.bulletDot}>•</Text>
-                  <Text style={styles.bulletTextFullscreen}>{b}</Text>
-                </View>
-              ))}
-            </View>
+            )}
+            <BulletPoints bullets={page.bullets} fullscreen={true} />
           </View>
 
-          <View style={styles.chartSectionFullscreen}>
-            {page.chart?.type === "donut" && (
-              <DonutChart
-                data={page.chart.data}
-                centerLabel={page.chart.centerLabel}
-                size={Math.min(SCREEN_WIDTH - 80, 260)}
-              />
-            )}
-            {page.chart?.type === "stackedBar" && (
-              <StackedBar
-                categories={page.chart.categories}
-                series={page.chart.series}
-              />
-            )}
-            {page.chart?.type === "singleItemDonut" && (
-              <SingleItemDonut
-                title={page.chart.dataTitle}
-                data={page.chart.data}
-                size={Math.min(SCREEN_WIDTH - 80, 220)}
-              />
-            )}
-            {page.chart?.type === "trendMini" && (
-              <TrendMini data={page.chart.data} groups={page.chart.groups} />
-            )}
-            {page.secondaryChart?.type === "barRow" && (
-              <BarRow
-                title={page.secondaryChart.title}
-                data={page.secondaryChart.data}
-              />
-            )}
-          </View>
+          <ChartRenderer
+            chart={page.chart}
+            secondaryChart={page.secondaryChart}
+            fullscreen={true}
+          />
 
           <View style={styles.footerSection}>
-            {page.chips?.length ? <Chips items={page.chips} /> : null}
-            {page.caption ? (
-              <Text style={styles.captionFullscreen}>{page.caption}</Text>
-            ) : null}
-            {page.caption_science ? (
-              <Text style={styles.captionScienceFullscreen}>
-                {page.caption_science} (See: SCIENTIFIC BREAKDOWN.PDF)
-              </Text>
-            ) : null}
+            {page.chips?.length > 0 && <Chips items={page.chips} />}
+            <CaptionSection
+              caption={page.caption}
+              caption_science={page.caption_science}
+              fullscreen={true}
+            />
           </View>
         </View>
       ) : (
@@ -98,59 +138,25 @@ const StoryCard = ({ page, fullscreen = false }) => {
           <Text style={[styles.title, { color: palette.text || "#0F172A" }]}>
             {page.title}
           </Text>
-          {page.subtitle ? (
+          {page.subtitle && (
             <Text
               style={[styles.subtitle, { color: palette.text || "#0F172A" }]}
             >
               {page.subtitle}
             </Text>
-          ) : null}
-          <View style={styles.bullets}>
-            {page.bullets?.slice(0, 3).map((b, idx) => (
-              <View key={idx} style={styles.bulletRow}>
-                <Text style={styles.bulletDot}>•</Text>
-                <Text style={styles.bulletText}>{b}</Text>
-              </View>
-            ))}
-          </View>
-          {page.chart?.type === "donut" && (
-            <DonutChart
-              data={page.chart.data}
-              centerLabel={page.chart.centerLabel}
-              size={200}
-            />
           )}
-          {page.chart?.type === "stackedBar" && (
-            <StackedBar
-              categories={page.chart.categories}
-              series={page.chart.series}
-            />
-          )}
-          {page.chart?.type === "singleItemDonut" && (
-            <SingleItemDonut
-              title={page.chart.dataTitle}
-              data={page.chart.data}
-            />
-          )}
-          {page.chart?.type === "trendMini" && (
-            <TrendMini data={page.chart.data} groups={page.chart.groups} />
-          )}
-          {page.secondaryChart?.type === "barRow" &&
-          page.secondaryChart?.data?.length ? (
-            <BarRow
-              title={page.secondaryChart.title}
-              data={page.secondaryChart.data}
-            />
-          ) : null}
-          {page.chips?.length ? <Chips items={page.chips} /> : null}
-          {page.caption ? (
-            <Text style={styles.caption}>{page.caption}</Text>
-          ) : null}
-          {page.caption_science ? (
-            <Text style={styles.captionScience}>
-              {page.caption_science} (See: SCIENTIFIC BREAKDOWN.PDF)
-            </Text>
-          ) : null}
+          <BulletPoints bullets={page.bullets} fullscreen={false} />
+          <ChartRenderer
+            chart={page.chart}
+            secondaryChart={page.secondaryChart}
+            fullscreen={false}
+          />
+          {page.chips?.length > 0 && <Chips items={page.chips} />}
+          <CaptionSection
+            caption={page.caption}
+            caption_science={page.caption_science}
+            fullscreen={false}
+          />
         </>
       )}
     </View>
@@ -184,48 +190,21 @@ const styles = StyleSheet.create({
     maxWidth: 420,
     flex: 1,
   },
-  headerSection: {
-    marginBottom: 10,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: "800",
-  },
-  titleFullscreen: {
-    fontSize: 24,
-    fontWeight: "800",
-  },
-  subtitle: {
-    fontSize: 13,
-    opacity: 0.8,
-    marginTop: 2,
-    marginBottom: 8,
-  },
+  headerSection: { marginBottom: 10 },
+  title: { fontSize: 18, fontWeight: "800" },
+  titleFullscreen: { fontSize: 24, fontWeight: "800" },
+  subtitle: { fontSize: 13, opacity: 0.8, marginTop: 2, marginBottom: 8 },
   subtitleFullscreen: {
     fontSize: 14,
     opacity: 0.85,
     marginTop: 4,
     marginBottom: 10,
   },
-  bullets: {
-    marginVertical: 8,
-  },
-  bulletsFullscreen: {
-    marginTop: 8,
-    marginBottom: 12,
-  },
-  bulletRow: {
-    flexDirection: "row",
-    marginBottom: 6,
-  },
-  bulletDot: {
-    marginRight: 6,
-    color: "#6B7280",
-  },
-  bulletText: {
-    flex: 1,
-    color: "#111827",
-  },
+  bullets: { marginVertical: 8 },
+  bulletsFullscreen: { marginTop: 8, marginBottom: 12 },
+  bulletRow: { flexDirection: "row", marginBottom: 6 },
+  bulletDot: { marginRight: 6, color: "#6B7280" },
+  bulletText: { flex: 1, color: "#111827" },
   bulletTextFullscreen: {
     flex: 1,
     color: "#111827",
@@ -238,19 +217,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginVertical: 8,
   },
-  footerSection: {
-    marginTop: 10,
-  },
-  caption: {
-    fontSize: 11,
-    color: "#6B7280",
-    marginTop: 10,
-  },
-  captionFullscreen: {
-    fontSize: 12,
-    color: "#4B5563",
-    marginTop: 12,
-  },
+  footerSection: { marginTop: 10 },
+  caption: { fontSize: 11, color: "#6B7280", marginTop: 10 },
+  captionFullscreen: { fontSize: 12, color: "#4B5563", marginTop: 12 },
   captionScience: {
     fontSize: 11,
     color: "#6B7280",
