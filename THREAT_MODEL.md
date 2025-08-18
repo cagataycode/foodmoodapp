@@ -6,12 +6,12 @@
 
 The FoodMood app processes and stores several types of sensitive and valuable data:
 
-- **User Credentials**: Email addresses and user passwords submitted to the backend for registration/login (transiently handled, not stored or hashed by the backend; hashing and storage are handled by Supabase Auth).
-- **User Food Logs & Mood Data**: Personal records of what users eat, when, and how they feel, which are sensitive health-related data.
-- **User Profile & Subscription Data**: Includes usernames, subscription tier (free/premium) and other profile information.
-- **Access Tokens (Supabase)**: Short-lived Supabase user tokens used to authenticate API requests; if stolen, could allow account takeover.
-- **API Endpoints & Business Logic**: The backend logic that enforces access controls, data validation, and business rules.
-- **Supabase Database & Storage**: The underlying database and storage where all user and app data resides.
+- **User Credentials**: Email addresses and passwords handled by Supabase Auth (never stored by our backend).
+- **User Food Logs & Mood Data**: Personal records of food intake, meal times, mood associations, portion sizes, notes, and base64-encoded images.
+- **User Profile & Subscription Data**: Usernames, email addresses, subscription tiers (free/premium), and profile preferences.
+- **Access/Refresh Tokens**: Supabase-issued tokens for API authentication, stored securely on devices.
+- **API Endpoints & Business Logic**: NestJS backend with request-scoped authentication and Row Level Security enforcement.
+- **Database & Row Level Security**: Supabase PostgreSQL with comprehensive RLS policies protecting all user data.
 
 ### 2. Threat Actors
 
@@ -75,11 +75,12 @@ The FoodMood app aims to achieve the following security goals:
 
 ---
 
-## Notes on Password Security
+## Current Authentication Architecture
 
-- **Password Handling**: All password hashing, storage, and verification are performed by Supabase Auth. The backend receives raw passwords transiently for registration/login requests and forwards them to Supabase, but does not store or hash them.
-- **Supabase Security**: Supabase Auth uses industry-standard password hashing and enforces password policies. For details, refer to Supabase's official documentation.
-- **Backend Code**: The backend does not implement custom password hashing. The previous `bcryptjs` dependency has been removed.
+- **Supabase Auth Integration**: All authentication is handled by Supabase Auth through our NestJS backend, which acts as a secure proxy.
+- **Request-Scoped Clients**: Each API request creates a new Supabase client with the user's access token, ensuring RLS policies are enforced.
+- **Token Management**: Access and refresh tokens are managed by Supabase and stored securely on the client using Expo SecureStore.
+- **No Custom JWT**: The backend no longer implements custom JWT handling - all tokens are Supabase-issued and validated.
 
 ---
 
@@ -87,26 +88,28 @@ The FoodMood app aims to achieve the following security goals:
 
 ### Backend (NestJS)
 
-- **Authentication**: Backend verifies Supabase user tokens (no custom JWTs). A request-scoped Supabase client is created per request with the user's Authorization header so RLS applies to all DB queries.
-- **Role-based Access Control**: `PremiumGuard` exists but is not currently applied to any routes.
-- **Input Validation**: All DTOs use `class-validator`. Global `ValidationPipe` enforces whitelisting, forbids non-whitelisted properties, and transforms input types.
-- **Error Handling**: NestJS HTTP exceptions are used. Custom error types exist but no global exception filter is configured.
-- **Rate Limiting**: Not configured. Add `@nestjs/throttler` and apply a global guard.
-- **CORS Configuration**: Development allows a broad set of localhost/Expo origins. Production uses `CORS_ORIGIN` env (default `http://localhost:3000`).
-- **Environment Variables**: Supabase keys are loaded from environment variables and are not hardcoded. `JWT_SECRET` is no longer used.
-- **Supabase Access**: RLS policies are defined and enforced at runtime by using a user-scoped Supabase client (anon key + user's token). Service role is reserved for admin/background tasks and tests.
-- **HTTPS (Recommended)**: Enforce HTTPS in production deployments (reverse proxy or hosting config).
-- **API Documentation**: Swagger docs enabled at `/api/docs` with Bearer auth.
+- **Authentication**: Request-scoped Supabase clients with user tokens ensure RLS enforcement on all database operations.
+- **Role-based Access Control**: `SupabaseAuthGuard` protects all authenticated routes. `PremiumGuard` available for premium features.
+- **Input Validation**: Comprehensive DTO validation with `class-validator`. Global `ValidationPipe` with whitelist and transform options.
+- **Error Handling**: NestJS HTTP exceptions with consistent error responses and proper status codes.
+- **Rate Limiting**: `@nestjs/throttler` dependency available but not yet configured globally.
+- **CORS Configuration**: Environment-specific CORS settings with secure defaults for production.
+- **Environment Variables**: All secrets loaded from environment variables. No hardcoded credentials.
+- **Row Level Security**: All user data queries automatically respect RLS policies through request-scoped clients.
+- **HTTPS Enforcement**: Required for production deployments with secure token transmission.
+- **API Documentation**: Comprehensive Swagger documentation at `/api/docs` with authentication examples.
+- **Testing**: Full test suite including unit, integration, and e2e tests with security validation.
 
 ### Frontend (React Native/Expo)
 
-- **Secure Token Storage**: Implemented with `expo-secure-store` for Supabase access tokens.
-- **Token Management**: Tokens are included in all API requests via the `Authorization` header.
-- **Protected Routes**: Navigation and UI are protected by authentication context; unauthenticated users are redirected.
-- **Input Validation**: Client-side validation for forms (e.g., email format, required fields).
-- **Error Handling**: All API and authentication errors are caught and displayed to users.
-- **API Communication**: All requests should use HTTPS in production via `EXPO_PUBLIC_API_URL`.
-- **No Sensitive Data in Code**: No secrets or sensitive data are hardcoded in the frontend.
+- **Secure Token Storage**: Production uses `expo-secure-store` for Supabase access tokens. Development uses AsyncStorage.
+- **Token Management**: Access/refresh tokens automatically included in API requests with proper error handling.
+- **Protected Routes**: Expo Router navigation protected by authentication context with automatic redirects.
+- **Input Validation**: Comprehensive client-side form validation with real-time feedback.
+- **Error Handling**: Structured error handling for all API calls with user-friendly error messages.
+- **API Communication**: HTTPS enforced in production. Environment-based API URL configuration.
+- **Context-based Authentication**: React Context manages authentication state with loading states and error handling.
+- **No Hardcoded Secrets**: All configuration through environment variables and secure storage.
 
 ### Supabase
 
@@ -119,17 +122,17 @@ The FoodMood app aims to achieve the following security goals:
 
 ## Future Enhancements
 
-- Enforce HTTPS everywhere (backend and frontend deployments)
-- Implement API rate limiting with `@nestjs/throttler` and consider IP/user-based policies
-- Reduce JSON body limits and/or move images to object storage; validate and cap `image_base64` sizes
-- Use secure storage for tokens on devices (`expo-secure-store`) and consider keychain/keystore
-- Implement token refresh flow on the client (rotate `access_token` with `refresh_token`)
-- Apply `PremiumGuard` to premium-only endpoints when introduced
-- Ensure all user-facing DB calls use the user token; restrict service-role usage to privileged jobs
-- Monitor and log security events (audit logging)
-- Regularly review and update dependencies
-- Perform periodic penetration testing and vulnerability scanning
+- **Rate Limiting**: Implement global API rate limiting with `@nestjs/throttler` for DOS protection
+- **Image Storage**: Move base64 images to Supabase Storage with proper access controls and size limits
+- **Token Refresh**: Implement automatic token refresh flow in the frontend
+- **Premium Features**: Apply `PremiumGuard` to premium-only endpoints when subscription features are added
+- **Audit Logging**: Implement comprehensive security event logging and monitoring
+- **Dependency Management**: Automated dependency updates and vulnerability scanning
+- **Penetration Testing**: Regular security assessments and vulnerability scans
+- **Content Security**: Implement proper content validation for user-uploaded images
+- **Session Management**: Advanced session management with device tracking and remote logout
+- **Two-Factor Authentication**: Optional 2FA for enhanced account security
 
 ---
 
-_Last updated: 2025-08-12_
+_Last updated: 18-08-2025_

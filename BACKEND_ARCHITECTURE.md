@@ -7,47 +7,68 @@ This document explains the NestJS-based backend architecture for the FoodMood ap
 ### **Backend (`foodmoodapp/backend/`)**
 
 - **NestJS Framework**: Enterprise-grade Node.js framework with TypeScript
-- **Authentication Module**: Custom JWT-based authentication with Passport (no Supabase Auth)
-- **API Endpoints**: RESTful APIs with Swagger documentation
-- **Database Integration**: Supabase PostgreSQL with type safety (database only)
-- **Validation**: Request validation with class-validator
-- **Security**: Guards, interceptors, and middleware
+- **Authentication Module**: Supabase Auth integration with request-scoped clients
+- **API Endpoints**: RESTful APIs with comprehensive Swagger documentation
+- **Database Integration**: Supabase PostgreSQL with Row Level Security (RLS)
+- **Validation**: Request validation with class-validator and DTOs
+- **Security**: Guards, RLS policies, and request-scoped authentication
+- **Testing**: Complete test suite with unit, integration, and e2e tests
 
 ### **Frontend (`foodmoodapp/frontend/`)**
 
-- **UI Components**: React Native screens and components
-- **API Client**: HTTP requests to NestJS backend
-- **State Management**: Authentication state with React Context
-- **Token Storage**: Secure token management
+- **UI Components**: React Native Expo app with custom components
+- **API Client**: HTTP requests to NestJS backend with token management
+- **State Management**: Authentication and app state with React Context
+- **Token Storage**: Secure token storage with Expo SecureStore
+- **Navigation**: Expo Router for screen navigation
+- **Charts**: D3-based data visualization components
 
 ## 📁 Backend Structure
 
 ```
 backend/
 ├── src/
-│   ├── auth/                    # Authentication module
-│   │   ├── guards/             # Route protection guards
-│   │   ├── strategies/         # Passport JWT strategy
-│   │   ├── auth.controller.ts  # Auth endpoints
-│   │   ├── auth.service.ts     # Auth business logic
-│   │   └── auth.module.ts      # Auth module definition
+│   ├── auth/                    # Supabase Auth integration module
+│   │   ├── guards/             # SupabaseAuthGuard & PremiumGuard
+│   │   ├── auth.controller.ts  # Auth endpoints with Swagger docs
+│   │   ├── auth.service.ts     # Supabase Auth business logic
+│   │   └── auth.module.ts      # Auth module with providers
 │   ├── food-logs/              # Food logging module
-│   │   ├── food-logs.controller.ts
-│   │   ├── food-logs.service.ts
-│   │   └── food-logs.module.ts
-│   ├── insights/               # AI insights module
-│   │   ├── insights.controller.ts
-│   │   ├── insights.service.ts
-│   │   └── insights.module.ts
+│   │   ├── food-logs.controller.ts  # CRUD endpoints
+│   │   ├── food-logs.service.ts     # Business logic with RLS
+│   │   └── food-logs.module.ts      # Module definition
 │   ├── health/                 # Health check endpoints
+│   │   ├── health.controller.ts
+│   │   └── health.module.ts
 │   ├── common/                 # Shared utilities
-│   │   └── dto/               # Data Transfer Objects
+│   │   ├── dto/               # Request/Response DTOs
+│   │   │   ├── auth.dto.ts
+│   │   │   └── food-log.dto.ts
+│   │   ├── services/          # Shared services
+│   │   │   └── supabase-client.provider.ts
+│   │   └── utils/             # Utility functions
 │   ├── types/                  # TypeScript type definitions
+│   │   ├── auth.types.ts      # Authentication types
+│   │   ├── food-log.types.ts  # Food logging types
+│   │   ├── user.types.ts      # User profile types
+│   │   ├── database.types.ts  # Database schema types
+│   │   ├── common.types.ts    # Shared types
+│   │   ├── errors.types.ts    # Error handling types
+│   │   └── index.ts           # Barrel exports
+│   ├── test/                   # Test utilities
+│   │   ├── integration.utils.ts
+│   │   └── setup.ts
 │   ├── app.module.ts           # Root application module
 │   └── main.ts                # Application entry point
-├── supabase/                   # Supabase configuration (database only)
-├── package.json
-└── env.example                 # Environment variables template
+├── supabase/                   # Database configuration
+│   ├── config.toml            # Supabase configuration
+│   └── migrations/            # Database migrations
+│       ├── 20240101000002_current_schema.sql
+│       └── 20240101000003_add_mood_scores.sql
+├── coverage/                   # Test coverage reports
+├── jest.config.js             # Jest configuration
+├── package.json               # Dependencies and scripts
+└── tsconfig.json              # TypeScript configuration
 ```
 
 ## 🔐 Authentication Flow
@@ -55,55 +76,52 @@ backend/
 ### **1. User Registration**
 
 ```
-Frontend → POST /api/auth/register → NestJS Controller → AuthService → Supabase (DB) → Database
+Frontend → POST /api/auth/register → NestJS Controller → AuthService → Supabase Auth → User Profile Creation
 ```
 
 ### **2. User Login**
 
 ```
-Frontend → POST /api/auth/login → NestJS Controller → AuthService → Supabase (DB) → JWT Token
+Frontend → POST /api/auth/login → NestJS Controller → AuthService → Supabase Auth → Access & Refresh Tokens
 ```
 
 ### **3. Protected Requests**
 
 ```
-Frontend → Bearer Token → NestJS Guard → Controller → Service → Response
+Frontend → Bearer Token → SupabaseAuthGuard → Request-scoped Supabase Client → RLS-protected Query
 ```
+
+### **4. Request-Scoped Authentication**
+
+Each request creates a new Supabase client with the user's access token, ensuring Row Level Security (RLS) policies are enforced for all database operations.
 
 ## 🚀 Backend API Endpoints
 
 ### **Authentication Routes (`/api/auth`)**
 
-| Method | Endpoint    | Description              | Auth Required |
-| ------ | ----------- | ------------------------ | ------------- |
-| POST   | `/register` | Create new user account  | No            |
-| POST   | `/login`    | Authenticate user        | No            |
-| POST   | `/logout`   | Sign out user            | Yes           |
-| GET    | `/me`       | Get current user profile | Yes           |
-| PUT    | `/profile`  | Update user profile      | Yes           |
-| DELETE | `/account`  | Delete user account      | Yes           |
+| Method | Endpoint    | Description                 | Auth Required | RLS Enforced |
+| ------ | ----------- | --------------------------- | ------------- | ------------ |
+| POST   | `/register` | Register with Supabase Auth | No            | No           |
+| POST   | `/login`    | Login with Supabase Auth    | No            | No           |
+| GET    | `/me`       | Get current user profile    | Yes           | Yes          |
+| PUT    | `/profile`  | Update user profile         | Yes           | Yes          |
+| DELETE | `/account`  | Delete user account         | Yes           | Yes          |
 
 ### **Food Logs Routes (`/api/food-logs`)**
 
-| Method | Endpoint | Description             | Auth Required |
-| ------ | -------- | ----------------------- | ------------- |
-| GET    | `/`      | Get user's food logs    | Yes           |
-| POST   | `/`      | Create new food log     | Yes           |
-| GET    | `/:id`   | Get specific food log   | Yes           |
-| PUT    | `/:id`   | Update food log         | Yes           |
-| DELETE | `/:id`   | Delete food log         | Yes           |
-| GET    | `/stats` | Get food log statistics | Yes           |
+| Method | Endpoint | Description                       | Auth Required | RLS Enforced |
+| ------ | -------- | --------------------------------- | ------------- | ------------ |
+| GET    | `/`      | Get user's food logs with filters | Yes           | Yes          |
+| POST   | `/`      | Create new food log entry         | Yes           | Yes          |
+| GET    | `/:id`   | Get specific food log             | Yes           | Yes          |
+| PUT    | `/:id`   | Update food log entry             | Yes           | Yes          |
+| DELETE | `/:id`   | Delete food log entry             | Yes           | Yes          |
 
-### **Insights Routes (`/api/insights`)**
+### **Health Routes (`/health`)**
 
-| Method | Endpoint            | Description               | Auth Required |
-| ------ | ------------------- | ------------------------- | ------------- |
-| GET    | `/`                 | Get user insights         | Yes           |
-| GET    | `/:id`              | Get specific insight      | Yes           |
-| POST   | `/generate/weekly`  | Generate weekly insights  | Yes           |
-| POST   | `/generate/monthly` | Generate monthly insights | Yes           |
-| PUT    | `/:id/read`         | Mark insight as read      | Yes           |
-| DELETE | `/:id`              | Delete insight            | Yes           |
+| Method | Endpoint | Description        | Auth Required | RLS Enforced |
+| ------ | -------- | ------------------ | ------------- | ------------ |
+| GET    | `/`      | Application health | No            | No           |
 
 ### **Response Format**
 
@@ -166,43 +184,54 @@ EXPO_PUBLIC_API_URL=http://localhost:3001/api
 
 ### **Backend Security**
 
-- **JWT Authentication**: Token-based authentication with Passport
-- **Guards**: Route protection with JwtAuthGuard
-- **Validation**: Request validation with class-validator
-- **CORS**: Cross-origin resource sharing configuration
-- **Rate Limiting**: Built-in request throttling
-- **Helmet**: Security headers
+- **Supabase Auth**: Secure authentication with access/refresh tokens
+- **Guards**: Route protection with SupabaseAuthGuard and PremiumGuard
+- **Row Level Security**: Database-level access control with RLS policies
+- **Request-Scoped Clients**: Each request uses user-specific Supabase client
+- **Validation**: Comprehensive request validation with class-validator DTOs
+- **CORS**: Environment-specific CORS configuration
+- **Environment Variables**: Secure secret management
 
 ### **Frontend Security**
 
-- **Token Storage**: Secure token management
-- **API Error Handling**: Graceful error responses
-- **Input Validation**: Client-side validation
-- **Automatic Token Refresh**: Session management
+- **Secure Token Storage**: Expo SecureStore for production token storage
+- **API Error Handling**: Comprehensive error handling and user feedback
+- **Input Validation**: Client-side form validation
+- **Protected Routes**: Authentication-based route protection
 
-## 🔄 Migration from Express to NestJS
+## 🏗️ Key Implementation Details
 
-### **Before (Express.js)**
-
-```javascript
-// Express route
-app.post("/api/auth/login", authMiddleware, async (req, res) => {
-  // Manual validation
-  // Manual error handling
-  // Manual response formatting
-});
-```
-
-### **After (NestJS)**
+### **Request-Scoped Supabase Client**
 
 ```typescript
-// NestJS controller
-@Post('login')
-@UseGuards(JwtAuthGuard)
-async login(@Body() loginDto: LoginDto) {
-  // Automatic validation via DTOs
-  // Automatic error handling via exception filters
-  // Consistent response formatting
+@Injectable({ scope: Scope.REQUEST })
+export class AuthService {
+  constructor(
+    @Inject(SUPABASE_CLIENT)
+    private readonly supabase: SupabaseClient<Database>
+  ) {}
+  // Each request gets a client with user's auth token
+}
+```
+
+### **Row Level Security Integration**
+
+```typescript
+// All database queries automatically respect RLS policies
+const { data: foodLogs } = await this.supabase
+  .from("food_logs")
+  .select("*")
+  .eq("user_id", userId); // RLS ensures user only sees their data
+```
+
+### **Authentication Guard**
+
+```typescript
+@UseGuards(SupabaseAuthGuard)
+@Post()
+async createFoodLog(@Request() req, @Body() createFoodLogDto: CreateFoodLogDto) {
+  // req.user contains authenticated user info
+  return this.foodLogsService.createFoodLog(req.user.id, createFoodLogDto);
 }
 ```
 

@@ -1,16 +1,16 @@
 # Authentication System
 
-This document explains how authentication is implemented in the FoodMood app using a custom NestJS backend with JWT tokens (no Supabase Auth).
+This document explains how authentication is implemented in the FoodMood app using Supabase Auth integration through a NestJS backend.
 
 ## Overview
 
-The authentication system uses a NestJS backend with JWT token-based authentication. It includes:
+The authentication system uses Supabase Auth through a NestJS backend with secure token management. It includes:
 
-- User registration and login
-- JWT token management
+- User registration and login with Supabase Auth
+- Access/refresh token management
 - Automatic user profile creation
-- Protected routes
-- Sign out functionality
+- Protected routes with request-scoped authentication
+- Secure token storage with Expo SecureStore
 
 ## Components
 
@@ -20,11 +20,11 @@ Manages authentication state throughout the app using React Context.
 
 **Features:**
 
-- User session management
-- JWT token storage and validation
-- Sign in/up/out functions
-- Loading states
-- Profile updates
+- User session management with React Context
+- Supabase access/refresh token storage and validation
+- Sign in/up/out functions with error handling
+- Loading states and authentication checks
+- Profile updates and account management
 
 **Usage:**
 
@@ -48,19 +48,21 @@ Handles all backend API communication including authentication.
 
 ### 3. Token Management
 
-The app uses secure token storage for JWT tokens:
+The app uses secure token storage for Supabase access/refresh tokens:
 
-**Development (In-Memory):**
+**Development (AsyncStorage):**
 
 ```javascript
-global.authToken = token;
+// Tokens stored in AsyncStorage for development
+await AsyncStorage.setItem("authToken", accessToken);
 ```
 
 **Production (Secure Storage):**
 
 ```javascript
 import * as SecureStore from "expo-secure-store";
-await SecureStore.setItemAsync("authToken", token);
+await SecureStore.setItemAsync("authToken", accessToken);
+// Refresh tokens handled automatically by Supabase
 ```
 
 ### 4. AuthGuard (Built into components)
@@ -98,32 +100,43 @@ EXPO_PUBLIC_API_URL=http://localhost:3001/api
 
 ### 3. Database Schema
 
-Ensure your Supabase database has the required tables:
+The Supabase database includes these key tables:
 
-- `auth.users` (default table for managing user authentication, required for Supabase Auth)
-- `user_profiles` (custom table for storing additional user data, linked to `auth.users` by `user_id`)
+- `auth.users` (Supabase Auth table for user authentication)
+- `user_profiles` (custom table for user data, linked to `auth.users` via RLS policies)
+- `food_logs` (user food entries with mood tracking)
+- `insights` (future AI-generated insights)
 
 ### 4. App Structure
 
-The authentication flow is integrated into the app structure:
+The authentication flow is integrated into the Expo Router structure:
 
 ```
 app/
 ├── _layout.jsx              # Root layout with AuthProvider
 ├── index.jsx               # Home page with auth redirect
 ├── auth/
-│   ├── signin.jsx          # Sign in page
-│   └── signup.jsx          # Sign up page
+│   ├── signin.jsx          # Sign in page with form validation
+│   └── signup.jsx          # Sign up page with form validation
 ├── main/
-│   ├── dashboard.jsx       # Protected dashboard
-│   ├── profile.jsx         # Protected profile
-│   └── settings.jsx        # Protected settings with sign out
+│   ├── _layout.jsx         # Protected main layout
+│   ├── dashboard.jsx       # Protected dashboard with food logs
+│   ├── profile.jsx         # Protected user profile
+│   ├── edit-profile.jsx    # Profile editing
+│   ├── settings.jsx        # Settings with logout
+│   └── insights.jsx        # Insights/analytics page
 ├── contexts/
 │   └── AuthContext.jsx     # Authentication context
 ├── services/
-│   └── apiService.js       # Backend API client
+│   ├── apiService.js       # Backend API client
+│   └── authService.js      # Authentication helpers
+├── hooks/
+│   ├── useAuthForm.js      # Form handling hooks
+│   └── useLogFoodSave.js   # Food logging hooks
 └── components/
-    └── LoadingScreen.jsx   # Loading component
+    ├── LoadingScreen.jsx   # Loading component
+    ├── LogFoodModal.jsx    # Food entry modal
+    └── auth/               # Auth-specific components
 ```
 
 ## Usage
@@ -131,25 +144,29 @@ app/
 ### Sign Up
 
 1. User navigates to signup page
-2. Enters email, password, and username
-3. Account is created in NestJS backend
-4. User profile is automatically created in the database
-5. User is redirected to dashboard
+2. Enters email, password, and username with client-side validation
+3. NestJS backend registers user with Supabase Auth
+4. User profile is automatically created via database trigger
+5. Access/refresh tokens are received and stored securely
+6. User is redirected to dashboard
 
 ### Sign In
 
 1. User navigates to signin page
-2. Enters email and password
-3. NestJS backend authenticates credentials
-4. JWT token is received and stored
-5. User is redirected to dashboard
+2. Enters email and password with validation
+3. NestJS backend authenticates via Supabase Auth
+4. Access/refresh tokens are received and stored
+5. User context is updated with profile data
+6. User is redirected to dashboard
 
 ### Sign Out
 
 1. User goes to settings page
-2. Taps logout button
-3. JWT token is cleared
-4. User is redirected to home page
+2. Taps logout button with confirmation
+3. Backend logout endpoint is called (optional)
+4. Access/refresh tokens are cleared from secure storage
+5. User context is reset
+6. User is redirected to home page
 
 ### Protected Routes
 
